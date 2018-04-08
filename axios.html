@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<script src="https://unpkg.com/vue/dist/vue.js"></script>
+		<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+	</head>
+
+	<body>
+		<div id="app">
+			<button @click="getData">获取数据</button>
+			<button @click="postData">发送数据</button>
+			<button @click="mulRequest">发送数据</button>
+		</div>
+		<script type="text/javascript">
+			new Vue({
+				el: "#app",
+				data: {
+
+				},
+				methods: {
+					getData: function() {
+						axios.get('http://localhost:8080/mbi/user')
+							.then(function(response) {
+								console.log(response);
+							})
+							.catch(function(error) {
+								console.log(error);
+							})
+					},
+					getDataById: function() {
+						axios.get('http://localhost:8080/mbi/users', {
+								params: {
+									id: "12344"
+								}
+							})
+							.then(function(res) {
+								console.log(res);
+							})
+							.catch(function(error) {
+								console.log(error);
+							})
+					},
+					postData: function() {
+						//						axios.post("http://localhost:8080/mbi/postData",{
+						//							'id':'abc',
+						//							'name':'789'
+						//						})
+						axios({
+								url: 'http://localhost:8080/mbi/postData',
+								method: 'POST',
+								data: {
+									"id": "abc",
+									"name": "890"
+								}
+							})
+							.then(function(res) {
+								console.log(res.data);
+							})
+							.catch(function(error) {
+								console.log(error);
+							})
+					},
+					mulRequest: function() {
+						axios.all([this.getData(), this.postData()])
+							.then(axios.spread(function(acct, perms) {
+								console.dirxml(acct)
+								console.dirxml(perms)
+							}))
+					}
+				}
+			})
+		</script>
+	</body>
+
+</html>

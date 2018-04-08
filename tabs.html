@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+		<link rel="stylesheet" href="css/font-awesome.css" />
+
+		<!-- 先引入 Vue -->
+		<script src="https://unpkg.com/vue/dist/vue.js"></script>
+		<!-- 引入组件库 -->
+		<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+		<script type="text/javascript" src="js/qrcodejs/qrcode.js">
+		</script>
+		<style type="text/css">
+			[class^="el-icon-fa"],
+			[class*=" el-icon-fa"] {
+				display: inline-block;
+				font: normal normal normal 14px/1 FontAwesome!important;
+				font-size: inherit;
+				text-rendering: auto;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="app">
+			<el-tabs type="border-card">
+				<el-tab-pane>
+					<span slot="label"><i class="el-icon-date"></i> 我的行程</span> 我的行程
+				</el-tab-pane>
+				<el-tab-pane label="消息中心">消息中心</el-tab-pane>
+				<el-tab-pane label="角色管理">角色管理</el-tab-pane>
+				<el-tab-pane label="定时任务补偿">定时任务补偿</el-tab-pane>
+			</el-tabs>
+
+			<el-tabs v-model="tabId" type="border-card" @tab-click="tabClick(tabId)">
+				<el-tab-pane v-for="tab in tabs" :label="tab.label" :key="tab.id">
+					定时任务补偿{{tab.context}}
+					<span>xxx</span>
+					<div>dsfdsfsdf</div>
+					<div>{{tab.id}}</div>
+				</el-tab-pane>
+			</el-tabs>
+			<el-button type="text" @click="dialogVisible = true">点击打开 Dialog</el-button>
+			<el-button icon='fa-tree'>ttt</el-button>
+			<i class='fa fa-anchor'></i>
+			<i class="fa fa-camera-retro"></i>
+			<el-dialog :visible.sync="dialogVisible" width="375px">
+				<iframe src="dianwei-detail.html" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe>
+			</el-dialog>
+		</div>
+		<div id="qrcode" style=" width: 200px;height: 200px;"></div>
+		<script>
+			var app = new Vue({
+				el: "#app",
+				data: {
+					dialogVisible: false,
+					tabId: "1",
+					tabs: (function() {
+						var arr = [];
+						for(var i = 0; i < 10; i++) {
+							var obj = {};
+							obj.id = i;
+							obj.label = "label" + i;
+							obj.context = "context" + i;
+							arr[i] = obj;
+						}
+						return arr;
+					})()
+				},
+				mounted: function() {
+					this.qrcode();
+				},
+				methods: {
+					tabClick: function(tabId) {
+						console.log(tabId);
+					},
+					qrcode: function() {
+						var qrcode = new QRCode(document.getElementById("qrcode"), {
+							text: "http://jindo.dev.naver.com/collie",
+							width: 128,
+							height: 128,
+							colorDark: "#000000",
+							colorLight: "#ffffff",
+							correctLevel: QRCode.CorrectLevel.H
+						});
+						console.log(qrcode)
+					}
+				}
+			})
+		</script>
+
+	</body>
+
+</html>

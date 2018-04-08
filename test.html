@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style>
+			a {
+				position: absolute;
+				/*float: right;*/
+				/*margin: -20px 20px 20px 110px;*/
+				/*z-index:initial;*/
+				top: 180px;
+				left: 120px;
+			}
+		</style>
+		<script src="js/qrcodejs/qrcode.js"></script>
+	</head>
+
+	<body>
+		<div style="width: 200px;height: 200px; background-color: red;">
+			<img src="img/1.jpg" width="200px" height="200px" />
+			<a href="dianwei.html">超级链接</a>
+		</div>
+		<div id="qrcode"></div>
+		<script type="text/javascript">
+			var qrcode = new QRCode(document.getElementById("qrcode"), {
+				text: "http://jindo.dev.naver.com/collie",
+				width: 128,
+				height: 128,
+				colorDark: "#000000",
+				colorLight: "#ffffff",
+				correctLevel: QRCode.CorrectLevel.H
+			});
+		</script>
+	</body>
+
+</html>

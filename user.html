@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="https://unpkg.com/vue-easytable/umd/css/index.css">
+		<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+		<script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script>
+
+		<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+		<!-- 引入Vue -->
+		<script src="https://unpkg.com/vue/dist/vue.js" type="text/javascript"></script>
+		<!-- 引入组件库 -->
+		<script src="https://unpkg.com/vue-easytable/umd/js/index.js"></script>
+
+		<!-- 引入组件库 -->
+		<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+		<style>
+			.cell-edit-color {
+				color: #2db7f5;
+				font-weight: bold;
+			}
+			
+			.edit-table {
+				border: 1px solid gray;
+				border-collapse: collapse;
+				th {
+					border: 1px solid gray;
+				}
+				tbody {
+					tr {
+						td {
+							border: 1px solid gray;
+							input {
+								border: none;
+							}
+						}
+					}
+				}
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="app" style="width: 800px;">
+			<el-row :gutter="20" style="margin: 15px;">
+				<el-col :span="10">
+					<el-input v-model="keyword" @input="keyChange" placeholder="请输入姓名、联系电话备注等关键字进行搜索"></el-input>
+				</el-col>
+				<el-col :span="4" :offset="1">
+					<el-button @click="addUser()">新增扫楼人员</el-button>
+				</el-col>
+				<el-col :span="3" style="margin-left: 5px;">
+					<el-button @click="saveUser">保存修改</el-button>
+				</el-col>
+				<el-col :span="2" :offset="1">
+					<el-button style="margin-left: 10px;" icon="el-icon-delete" @click="delUser()">删除选中</el-button>
+				</el-col>
+			</el-row>
+			<el-row>
+				<div>
+					<v-table :width="765" :columns="columns" :table-data="tableData" :show-vertical-border="true" title-bg-color="#eee" row-hover-color="#eee" row-click-color="#edf7ff" :cell-edit-done="cellEditDone" :select-change="selectChange"></v-table>
+				</div>
+			</el-row>
+		</div>
+		<script>
+			//深拷贝
+			function shallowCopy(src) {
+				var dst = {};
+				for(var prop in src) {
+					if(src.hasOwnProperty(prop)) {
+						dst[prop] = src[prop];
+					}
+				}
+				return dst;
+			}
+			/*
+			 * 全属性搜索
+			 */
+			function searchAllValue(data,key){
+//				console.dirxml(data)
+//				console.log(key)
+				for(var prop in data){
+					if(data[prop].indexOf(key)>-1){
+						return true;
+					}	
+				}
+				return false;
+			}
+			//项目id
+			var projId = "Pj1101080001";
+			//登录用户的Id
+			var loginUserId = 'string';
+			var app = new Vue({
+				el: "#app",
+				data: {
+					baseUrl: 'http://172.16.3.187:8080/ScanBuilding/',
+					tableData: [],
+					showData:[],
+					currRowIndex: '',
+					keyword:'',
+					columns: [{
+							width: 60,
+							titleAlign: 'center',
+							columnAlign: 'center',
+							type: 'selection'
+						}, {
+							field: 'UserName',
+							title: '姓名',
+							width: 100,
+							titleAlign: 'center',
+							columnAlign: 'center',
+							isEdit: true
+						},
+						{
+							field: 'Phone',
+							title: '联系电话/登录名',
+							width: 260,
+							titleAlign: 'center',
+							columnAlign: 'center',
+							isEdit: true
+						},
+						{
+							field: 'Note',
+							title: '备注',
+							width: 330,
+							titleAlign: 'center',
+							columnAlign: 'center',
+							isEdit: true
+						}
+					]
+				},
+				methods: {
+					// 获取用户列表
+					getUsers: function() {
+						var that = this;
+						axios.post(that.baseUrl + 'service/user/query', {
+								"Comming": "revit",
+								"ProjId": "Pj1101080001",
+								"UserId": "string"
+							})
+							.then(function(res) {
+								console.log(res.data.UserList);
+								var data = res.data.UserList;
+								//增加操作标志位0为默认,1为增加,2为修改,3为删除
+								that.showData=res.data.UserList;
+								that.tableData = res.data.UserList;
+							})
+							.catch(function(error) {
+								console.log(error);
+							})
+					},
+					addUser: function() {
+						var newData = shallowCopy(this.tableData[this.tableData.length - 1])
+						newData.UserId = undefined;
+
+						this.tableData.push(newData);
+					},
+					delUser: function() {
+						//刪除服務器數據
+						var data = {
+							"Comming": "revit",
+							"ProjId": projId,
+							"UserId": loginUserId,
+							"UserList": [
+								this.tableData[this.currRowIndex].UserId
+							]
+						};
+						axios.post(this.baseUrl + "/service/user/delete", data)
+							.then(function(res) {
+								//刪除當前數據
+
+							})
+							.catch(function(err) {
+								console.log(err);
+							})
+						this.tableData.splice(this.currRowIndex, 1);
+						//this.tableData[this.currRowIndex];
+					},
+					saveUser: function() {
+						var addUsers = [];
+						var updateUser = [];
+						for(var i = 0; i < this.tableData.length; i++) {
+							if(this.tableData[i].flag == 2) {
+								updateUser.push(this.tableData[i]);
+							}
+							if(!this.tableData[i].UserId) {
+								addUsers.push(this.tableData[i]);
+							}
+						}
+
+						//创建扫楼用户
+						var createUser = {
+							"Comming": "revit",
+							"ProjId": projId,
+							"User": {
+								"Note": "string",
+								"Phone": "string",
+								"ProjId": projId,
+								"UserName": "string"
+							},
+							"UserId": loginUserId
+						};
+						for(var i = 0; i < addUsers.length; i++) {
+							var cUser = addUsers[i];
+							createUser.User.Note = cUser.Note;
+							createUser.User.Phone = cUser.Phone;
+							createUser.User.UserName = cUser.UserName;
+							axios.post(this.baseUrl + "service/user/create", createUser)
+								.then(function(res) {
+									console.dirxml(res.data);
+								})
+								.catch(function(err) {
+									console.log(err);
+								})
+						}
+
+						//更新扫楼用户
+						var updateUser = {
+							"Comming": "revit",
+							"ProjId": projId,
+							"UserId": loginUserId,
+							"UserList": updateUser
+						};
+						axios.post(this.baseUrl + "service/user/update", updateUser)
+							.then(function(res) {
+								console.dirxml(res.data);
+							})
+							.catch(function(err) {
+								console.log(err);
+							})
+					},
+					selectChange: function(selection, rowData) {
+						console.log(selection, rowData);
+					},
+					keyChange:function(){
+						this.tableData=this.showData.filter(item=>searchAllValue(item,this.keyword));
+					},
+					/***grid操作***/
+					// 单元格编辑回调
+					cellEditDone: function(newValue, oldValue, rowIndex, rowData, field) {
+						this.currRowIndex = rowIndex;
+						this.tableData[rowIndex][field] = newValue;
+						this.tableData[rowIndex].flag = 2;
+						// 接下来处理你的业务逻辑，数据持久化等...
+						//判断UserId是否为空,如果空则插入新数据,不空更新数据
+
+						console.log(rowData.UserId);
+					}
+				},
+				mounted: function() {
+					this.getUsers();
+				}
+			})
+		</script>
+
+	</body>
+
+</html>

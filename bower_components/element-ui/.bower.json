@@ -1,0 +1,15 @@
+{
+  "name": "element-ui",
+  "homepage": "https://github.com/ElemeFE/element",
+  "version": "2.2.0",
+  "_release": "2.2.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "v2.2.0",
+    "commit": "5223fb2d68a46a72aab8f113a6bd4c574b02f1d0"
+  },
+  "_source": "https://github.com/ElemeFE/element.git",
+  "_target": "^2.2.0",
+  "_originalSource": "element-ui",
+  "_direct": true
+}

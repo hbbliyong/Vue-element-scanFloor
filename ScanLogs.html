@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+		<script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script>
+
+		<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+		<!-- 引入Vue -->
+		<script src="https://unpkg.com/vue/dist/vue.js" type="text/javascript"></script>
+
+		<!-- 引入组件库 -->
+		<!--<script src="https://unpkg.com/element-ui/lib/index.js"></script>-->
+		<script src="https://cdn.bootcss.com/element-ui/2.2.2/index.js"></script>
+		<script src="js/tools.js" type="text/javascript" charset="utf-8"></script>
+		<style>
+
+		</style>
+	</head>
+
+	<body>
+		<div id="app" style="width: 1000px;">
+			<el-row :gutter="20" style="margin: 15px;">
+				<el-col :span="9">
+					<el-input v-model="keyword" @input="keyChange" placeholder="请输入操作人、动作、对象Id、备注等关键字进行搜索"></el-input>
+				</el-col>
+				<el-col :span="11" :offset="1">
+					<el-button @click="search(30)" type="text">一个月内</el-button><span>|</span>
+					<el-button @click="search(7)" type="text">一周内</el-button><span>|</span>
+					<el-button @click="search(3)" type="text">近三天</el-button><span>|</span>
+					<el-button @click="search(1)" type="text">昨天</el-button><span>|</span>
+					<el-button @click="search(0)" type="text">今天</el-button><span>|</span>
+					<el-button @click="dialogFormVisible = true" type="text">自定义 {{showDate()}}</el-button>
+				</el-col>
+				<el-col :span="3">
+					<el-button style="margin-left: 0px;" icon="el-icon-delete" @click="exportData()">导出到Excel</el-button>
+				</el-col>
+			</el-row>
+			<el-row>
+				<div>
+					<el-table :data="tableData" stripe border style="width: 100%">
+						<el-table-column prop="CreateTime" label="日期" width="180">
+						</el-table-column>
+						<el-table-column prop="Phone" label="操作人(手机号)" width="180">
+						</el-table-column>
+						<el-table-column prop="Action" label="动作">
+						</el-table-column>
+						<el-table-column prop="ObjectId" label="对象Id">
+						</el-table-column>
+						<el-table-column prop="Note" label="操作说明">
+						</el-table-column>
+					</el-table>
+				</div>
+			</el-row>
+			<el-dialog title="自定义扫楼时间段" :visible.sync="dialogFormVisible">
+				<el-form>
+					<el-form-item label="扫楼时间" :label-width="formLabelWidth">
+						<el-date-picker v-model="customDate" type="daterange" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']">
+						</el-date-picker>
+					</el-form-item>
+				</el-form>
+				<div slot="footer" class="dialog-footer">
+					<el-button @click="dialogFormVisible = false">取 消</el-button>
+					<el-button type="primary" @click="dialogFormVisible = false;search();">确 定</el-button>
+				</div>
+			</el-dialog>
+		</div>
+		<script>
+			//深拷贝
+			function shallowCopy(src) {
+				var dst = {};
+				for(var prop in src) {
+					if(src.hasOwnProperty(prop)) {
+						dst[prop] = src[prop];
+					}
+				}
+				return dst;
+			}
+			/*
+			 * 全属性搜索
+			 */
+			function searchAllValue(data, key) {
+				console.dirxml(data)
+				console.log(key)
+				for(var prop in data) {
+					if(data[prop].indexOf(key) > -1) {
+						return true;
+					}
+				}
+				return false;
+			}
+
+			var app = new Vue({
+				el: "#app",
+				data: {
+					projId: '', //项目id
+					loginUserId: '', //登录用户的Id
+					baseUrl: 'http://172.16.3.187:8080/ScanBuilding/',
+					//baseUrl: 'http://172.16.2.198:8080/',
+					tableData: [],
+					showData: [],
+					customDate: [],
+					//					showCustomDate: this.showDate(),
+					keyword: '',
+					dialogFormVisible: false,
+					formLabelWidth: '120px',
+				},
+				mounted: function() {
+					this.initData();
+					var now = new Date();
+					this.getLogs(now, now);
+				},
+				methods: {
+					initData: function() {
+						this.projId = GetQueryString('projId') || 'Pj1101080001';
+						this.loginUserId = GetQueryString('userId') || 'revit';
+					},
+					showDate: function() {
+						if(this.customDate == undefined || this.customDate.length == 0)
+							return undefined;
+						else {
+							var reg = /\d{4}-\d{2}-\d{2}/;
+							return '  (' + reg.exec(this.customDate[0].toISOString())[0] + '~' + reg.exec(this.customDate[1].toISOString())[0] + ')';
+						}
+					},
+					// 获取用户列表
+					getLogs: function(beginTime, endTime) {
+						var that = this;
+
+						function format(date) {
+							//var reg = /\d{4}-\d{2}-\d{2}/;
+							//return  reg.exec(date.toISOString())[0];
+							return date.toISOString().replace('T', ' ').replace(/\.\d{3}Z/, '');
+						}
+
+						var data = {
+							"Comming": "revit",
+
+							"PageNum": 10,
+							"PageSize": 10,
+							"ProjId": this.projId,
+							"UserId": this.loginUserId
+						};
+						if(this.keyword) {
+							data.Filter = this.keyword;
+						}
+						if(beginTime && endTime) {
+							data.BeginTime = format(beginTime);
+							data.EndTime = format(endTime);
+						}
+						axios.post(that.baseUrl + 'service/user_log/query', data)
+							.then(function(res) {
+								//console.log(res.data.UserList);
+								var data = res.data.LogList;
+
+								that.showData = data;
+								that.tableData = data;
+							})
+							.catch(function(error) {
+								console.log(error);
+							})
+					},
+					addUser: function() {
+						var newData = shallowCopy(this.tableData[this.tableData.length - 1])
+						newData.UserId = undefined;
+
+						this.tableData.push(newData);
+					},
+					exportData: function() {
+						//创建一个blob对象,file的一种
+						axios({
+								method: 'post',
+								url: this.baseUrl + 'service/user_log/export',
+								data: {
+									"Comming": "revit",
+									"ProjId": "string",
+									"UserId": "string"
+								},
+								responseType: 'blob'
+							})
+							.then(function(res) {
+								var blob = new Blob([res.data], {
+									type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8'
+								});
+								var fileName = res.headers['content-disposition'];
+								if(fileName)
+									fileName = fileName.substring(fileName.indexOf('=') + 1);
+								if('download' in document.createElement('a')) { // 非IE下载
+									const elink = document.createElement('a')
+									elink.download = fileName
+									elink.style.display = 'none'
+									elink.href = URL.createObjectURL(blob)
+									document.body.appendChild(elink)
+									elink.click()
+									URL.revokeObjectURL(elink.href) // 释放URL 对象
+									document.body.removeChild(elink)
+								} else { // IE10+下载
+									navigator.msSaveBlob(blob, fileName)
+								}
+							})
+							.catch(function(err) {
+								console.dirxml(err);
+							})
+
+					},
+					search: function(day) {
+						var startTime = new Date();
+						var endTime = new Date();
+						if(day) {
+							startTime.setDate(startTime.getDate() - day);
+						} else { //自定义时间
+							//dialogFormVisible = true;
+							startTime = this.customDate[0];
+							endTime = this.customDate[1];
+						}
+						this.getLogs(startTime, endTime);
+					},
+					selectChange: function(selection, rowData) {
+						console.log(selection, rowData);
+					},
+					keyChange: function() {
+						this.tableData = this.showData.filter(function(item) {
+							return searchAllValue(item, this.keyword)
+						});
+					}
+				}
+			})
+		</script>
+
+	</body>
+
+</html>

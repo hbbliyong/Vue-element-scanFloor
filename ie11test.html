@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>hangge.com</title>
+			<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+		<script src="https://cdn.bootcss.com/babel-polyfill/7.0.0-beta.3/polyfill.js"></script>
+		<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+		<!-- 引入Vue -->
+	
+		<!-- 先引入 Vue -->
+		<script src="https://unpkg.com/vue/dist/vue.js"></script>
+		<!-- 引入组件库 -->
+		<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+		<script type="text/babel">
+
+			var arrayLike = { '0': 1, '1': 2, '2': 3, length: 3 }; // Array.from为ES6新添加的方法 var arr2 = Array.from(arrayLike, x => x + x); console.log(arr2); // [2, 4, 6]
+
+		</script>
+	</head>
+
+	<body>
+		<div id="app">
+			<button @click="tt">test</button>
+			<div>
+				<input v-if="isEdit" @blur="blur" @keyup.enter="blur" type="text" v-model="value" />
+				<span v-if="!isEdit" @dblclick="dbClick">{{value}}</span>
+			</div>
+			<input type="text" v-model="text1" @change="change" @input="change" />
+			<template>
+				<el-select v-model="value" placeholder="请选择">
+					<el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
+					</el-option>
+				</el-select>
+			</template>
+		</div>
+		<script>
+			var app = new Vue({
+				el: "#app",
+				data: {
+					d: 1,
+					isEdit: false,
+					value: '双击编辑',
+					text1: '',
+					options: [{
+						value: '选项1',
+						label: '黄金糕'
+					}, {
+						value: '选项2',
+						label: '双皮奶'
+					}, {
+						value: '选项3',
+						label: '蚵仔煎'
+					}, {
+						value: '选项4',
+						label: '龙须面'
+					}, {
+						value: '选项5',
+						label: '北京烤鸭'
+					}],
+					value: ''
+				},
+				methods: {
+					tt: function() {
+						alert(this.d);
+					},
+					dbClick: function() {
+						this.isEdit = true;
+					},
+					blur: function() {
+						this.isEdit = false;
+					},
+					change: function() {
+						console.log(this.text);
+					}
+				}
+			})
+		</script>
+	</body>
+
+</html>
