@@ -83,8 +83,6 @@
 			 * 全属性搜索
 			 */
 			function searchAllValue(data, key) {
-				console.dirxml(data)
-				console.log(key)
 				for(var prop in data) {
 					if(data[prop].indexOf(key) > -1) {
 						return true;

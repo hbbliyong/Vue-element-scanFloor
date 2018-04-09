@@ -6,7 +6,7 @@
 		<title>扫楼数据整理</title>
 		<!-- 引入样式 -->
 		<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
-		
+
 		<script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script>
 		<!-- 先引入 Vue -->
 		<script src="https://unpkg.com/vue/dist/vue.js"></script>
@@ -14,11 +14,11 @@
 		<script src="https://unpkg.com/element-ui/lib/index.js"></script>
 
 		<link rel="stylesheet" type="text/css" href="bower_components/handsontable/dist/handsontable.full.min.css">
-		<link rel="stylesheet" type="text/css" href="https://handsontable.com/static/css/main.css">
 		<script src="bower_components/handsontable/dist//handsontable.full.js"></script>
 		<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 		<script src="https://cdn.bootcss.com/underscore.js/1.8.3/underscore-min.js"></script>
 		<script src="https://cdn.bootcss.com/qs/6.5.1/qs.js"></script>
+		<script src="js/tools.js"></script>
 		<style>
 			.image {
 				width: 200px;
@@ -109,7 +109,9 @@
 								<div class="dianwei">
 									<h3 style="padding: -20px;margin: 5px;">{{((PointList[item+nameIndex-1]||{})).Name}}点位标签</h3>
 									<span style="margin: 10px 0px;">附近资产:{{((PointList[item+nameIndex-1]||{})).Total}}个({{((PointList[item+nameIndex-1]||{})).Nocheck}}个未修订)</span>
-									<a href="#" @click='showPintDetail((PointList[item+nameIndex-1]||{}).Id)'><img :src="'img/'+(parseInt(item)+nameIndex)+'.jpg'" class="img" />
+									<a href="#" @click='showPintDetail((PointList[item+nameIndex-1]||{}).Id)'>
+										<!--<img :src="'img/'+(parseInt(item)+nameIndex)+'.jpg'" class="img" />-->
+										<img :src="PictureServerUrl((PointList[item+nameIndex-1]||{}).image)" class="img" />
 									</a>
 								</div>
 							</li>
@@ -340,13 +342,20 @@
 						console.log(this.tabId, "click", new Date())
 						var _this = this;
 						var postData = {
-							"FmId": "Pe11111111112222222222333333333300"
+							"FmId": "Pe11111111112222222222333333333300", //测试用
+//							"BuildId": "string",
+							"Comming": "revit",
+//							"FloorId": "string",
+//							
+//							"PointId": "string",
+//							"ProjId": "string",
+							"UserId": this.UserId
 						};
 						var headerUrl = 'http://192.168.30.96:8080/saas-manage/app/restTemplateService/queryObjectPropertyMapping';
 						var headerPostData = {
-							"user_id": "abc",
-							"code": "TD",
-							"type": "system",
+							"user_id":  this.UserId,
+							"code": "eq-gen", //通用设备信息点
+							"type": "equipFamily",
 							"app_type": "revit"
 						};
 
@@ -369,8 +378,6 @@
 								_this.$nextTick(function() {
 									_this.initSetting(datas.data.Family[0].FmList, header.data.Content);
 								});
-
-								//console.log(_this.tabId, "获取数据加载完成", new Date())
 							}))
 							.catch(function(err) {
 								console.log(err)
@@ -449,9 +456,9 @@
 
 						var headerUrl = 'http://192.168.30.96:8080/saas-manage/app/restTemplateService/queryObjectPropertyMapping';
 						var headerPostData = {
-							"user_id": "abc",
+							"user_id":  this.UserId,
 							"code": familyCode,
-							"type": "system",
+							"type": "equipFamily",
 							"app_type": "revit"
 						};
 
@@ -466,12 +473,14 @@
 					},
 					selected: function(index) {
 						this.clickIndex = index;
+						//切换点位信息
+						this.initData();
 					},
 					indexAdd: function() {
 						if(this.clickIndex < 3)
 							this.clickIndex += 1;
 						else {
-							if(this.nameIndex < 4)
+							if(this.nameIndex < this.PointList.length)
 								this.nameIndex += 1;
 						}
 						console.log(this.nameIndex)
@@ -623,6 +632,13 @@
 						}
 						//this.getLogs(startTime, endTime);
 					},
+					PictureServerUrl: function(key, width, height) {
+						var baseUrl = 'http://192.168.20.225:8080/';
+						var url = baseUrl + 'image-service/common/image_get?systemId=dev&key=' + key;
+						if(width && height)
+							url += '&width=' + widht + '&height' + height;
+						return url;
+					}
 				}
 			});
 		</script>
