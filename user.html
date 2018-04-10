@@ -97,11 +97,12 @@
 			var app = new Vue({
 				el: "#app",
 				data: {
-					baseUrl: 'http://172.16.3.187:8080/ScanBuilding/',
+					baseUrl: 'http://172.16.0.189:8080/ScanBuilding/',
 					tableData: [],
 					showData:[],
 					currRowIndex: '',
 					keyword:'',
+					allSeleted:[],
 					columns: [{
 							width: 60,
 							titleAlign: 'center',
@@ -161,18 +162,21 @@
 					},
 					delUser: function() {
 						//刪除服務器數據
-						var data = {
+						var postData = {
 							"Comming": "revit",
 							"ProjId": projId,
 							"UserId": loginUserId,
 							"UserList": [
-								this.tableData[this.currRowIndex].UserId
+								//this.tableData[this.currRowIndex].UserId
 							]
 						};
-						axios.post(this.baseUrl + "/service/user/delete", data)
+						this.allSeleted.forEach(function(data) {
+							postData.UserList.push(data.UserId);
+						});
+						axios.post(this.baseUrl + "/service/user/delete", postData)
 							.then(function(res) {
 								//刪除當前數據
-
+								//TODO:信息提示
 							})
 							.catch(function(err) {
 								console.log(err);
@@ -235,6 +239,7 @@
 					},
 					selectChange: function(selection, rowData) {
 						console.log(selection, rowData);
+						this.allSeleted=selection;
 					},
 					keyChange:function(){
 						this.tableData=this.showData.filter(item=>searchAllValue(item,this.keyword));

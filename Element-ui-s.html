@@ -28,8 +28,7 @@
 
 		/*点位标签*/
 
-		.menu,
-		.menu li {
+		.menu{
 			list-style: none;
 		}
 
@@ -37,8 +36,11 @@
 			float: left;
 			padding: 0px 15px;
 			margin: 10px;
+			width: 230px;
+			height: 200px;
 			display: inline-block;
 			border: 1px solid black;
+			box-sizing: border-box;
 		}
 
 		.img {
@@ -111,11 +113,12 @@
 			</el-col>
 			<el-col :span="22" style="align-content: center;">
 				<div class="showBorder">
-					<ul class="menu" v-for="(item,index) in pointCount">
-						<li :class="{'selected':index===clickIndex}" @click="selected(index)">
+					<ul class="menu">
+						<li :class="{'selected':index===clickIndex}" @click="selected(index)"  v-for="(item,index) in pointCount">
 							<div class="dianwei">
 								<h3 style="padding: -20px;margin: 5px;">{{((PointList[item+nameIndex-1]||{})).Name}}</h3>
 								<span style="margin: 10px 0px;">附近资产:{{((PointList[item+nameIndex-1]||{})).Total}}个({{((PointList[item+nameIndex-1]||{})).Nocheck}}个未修订)</span>
+								{{(PointList[item+nameIndex-1]||{}).image}}
 								<a href="#" @click='showPintDetail((PointList[item+nameIndex-1]||{}).Id)'>
 									<!--<img :src="'img/'+(parseInt(item)+nameIndex)+'.jpg'" class="img" />-->
 									<img :src="PictureServerUrl((PointList[item+nameIndex-1]||{}).image)" class="img" />
@@ -218,6 +221,7 @@
 				showDianWei: false,
 				dialogFormVisible: false,
 				showData: [],
+				
 				customDate: [],
 				formLabelWidth: '120px',
 			},
@@ -526,17 +530,17 @@
 						afterChange: function (changes, source) {
 							//当数据被编辑时
 							if (source == "edit") {
-								let row = changes[0];//当前被编辑的行数
-								let rowData = this.currHot.getDataAtRow(row);
+								let row = changes[0][0];//当前被编辑的行数
+								let rowData = _this.currHot.getDataAtRow(row);
 								//检测是否有重复数据，如果有重复数据，直接替换掉
-								for (let index = 0; index < this.needSaveData.length; index++) {
-									const element = array[index];
+								for (let index = 0; index < _this.needSaveData.length; index++) {
+									const element = _this.needSaveData[index];
 									if (element.id == rowData.id) {
 
 									}
 
 								}
-								this.needSaveData.push(rowData);
+								_this.needSaveData.push(rowData);
 							}
 						}
 					};
@@ -573,10 +577,10 @@
 						for (let key in fmData) {
 							this.Infos[key]=fmData[key];
 						}
-						return this;
+						return Fm;
 					}
 					let savaDatas=[];
-					this.saveData.forEach(function(data){
+					this.needSaveData.forEach(function(data){
 						let fm=getFmData(data);
 						postData.FmList.push(fm);
 					});
