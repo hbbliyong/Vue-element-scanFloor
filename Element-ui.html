@@ -333,12 +333,12 @@
 				var codeRenderer = function(instance, td, row, col, prop, value, cellProperties) {
 				var currencyCode = value;
 				value=value+'sssss';
-				while(td.firstChild) {
-					td.removeChild(td.firstChild);
-				}
-					var textNode = document.createTextNode(value === null ? '' : value);
+				// while(td.firstChild) {
+				// 	td.removeChild(td.firstChild);
+				// }
+				// 	var textNode = document.createTextNode(value === null ? '' : value);
 
-					td.appendChild(textNode);
+				// 	td.appendChild(textNode);
 				
 			};
 			var hotElement = document.querySelector('#hot');
@@ -357,7 +357,8 @@
 					{
 						data: 'currencyCode',
 						type: 'dropdown',
-						source:dataObject.map(function(e){return e.flag;})
+						source:dataObject.map(function(e){return e.flag;}),
+						renderer: codeRenderer
 					},
 					{
 						data: 'currency',
@@ -379,6 +380,13 @@
 						data: 'asOf',
 						type: 'date',
 						dateFormat: 'MM/DD/YYYY'
+					},
+					{
+						data: 'onedChng',
+						type: 'numeric',
+						numericFormat: {
+							pattern: '0.00%'
+						}
 					}
 				],
 				stretchH: 'all',

@@ -28,7 +28,7 @@
 
 		/*点位标签*/
 
-		.menu{
+		.menu {
 			list-style: none;
 		}
 
@@ -41,6 +41,11 @@
 			display: inline-block;
 			border: 1px solid black;
 			box-sizing: border-box;
+		}
+
+		.el-col button.button_active {
+			color: #909399;
+			text-decoration: underline;
 		}
 
 		.img {
@@ -90,17 +95,17 @@
 				</div>
 			</el-col>
 			<el-col :span="8">
-				<el-button @click="search(30)" type="text">一个月内</el-button>
+				<el-button @click="search(30)" :class=" elTopBtn == 30 ? 'button_active' : ''" type="text">一个月内</el-button>
 				<span>|</span>
-				<el-button @click="search(7)" type="text">一周内</el-button>
+				<el-button @click="search(7)" :class=" elTopBtn == 7 ? 'button_active' : ''" type="text">一周内</el-button>
 				<span>|</span>
-				<el-button @click="search(3)" type="text">近三天</el-button>
+				<el-button @click="search(3)" :class=" elTopBtn == 3 ? 'button_active' : ''" type="text">近三天</el-button>
 				<span>|</span>
-				<el-button @click="search(1)" type="text">昨天</el-button>
+				<el-button @click="search(1)" :class=" elTopBtn == 1 ? 'button_active' : ''" type="text">昨天</el-button>
 				<span>|</span>
-				<el-button @click="search(0)" type="text">今天</el-button>
+				<el-button @click="search(0)" :class=" elTopBtn == 0 ? 'button_active' : ''" type="text">今天</el-button>
 				<span>|</span>
-				<el-button @click="search()" type="text">自定义 {{showDate()}}</el-button>
+				<el-button @click="search()" :class=" elTopBtn == 5 ? 'button_active' : ''" type="text">自定义 {{showDate()}}</el-button>
 			</el-col>
 		</el-row>
 		<el-row v-if="isActive" style="margin-bottom:10px">
@@ -114,14 +119,13 @@
 			<el-col :span="22" style="align-content: center;">
 				<div class="showBorder">
 					<ul class="menu">
-						<li :class="{'selected':index===clickIndex}" @click="selected(index)"  v-for="(item,index) in pointCount">
+						<li :class="{'selected':index===clickIndex}" @click="selected(index)" v-for="(item,index) in pointCount">
 							<div class="dianwei">
 								<h3 style="padding: -20px;margin: 5px;">{{((PointList[item+nameIndex-1]||{})).Name}}</h3>
 								<span style="margin: 10px 0px;">附近资产:{{((PointList[item+nameIndex-1]||{})).Total}}个({{((PointList[item+nameIndex-1]||{})).Nocheck}}个未修订)</span>
-								{{(PointList[item+nameIndex-1]||{}).image}}
 								<a href="#" @click='showPintDetail((PointList[item+nameIndex-1]||{}).Id)'>
 									<!--<img :src="'img/'+(parseInt(item)+nameIndex)+'.jpg'" class="img" />-->
-									<img :src="PictureServerUrl((PointList[item+nameIndex-1]||{}).image)" class="img" />
+									<img :src="PictureServerUrl((PointList[item+nameIndex-1]||{}).Image)" class="img" />
 								</a>
 							</div>
 						</li>
@@ -207,7 +211,7 @@
 				clickIndex: '',
 				nameIndex: 0,
 				pointCount: 4,
-				isActive: true,
+				isActive: false,
 				allDatas: [],
 				tabId: '0',
 				PointList: [],
@@ -221,7 +225,7 @@
 				showDianWei: false,
 				dialogFormVisible: false,
 				showData: [],
-				
+				elTopBtn: 0,
 				customDate: [],
 				formLabelWidth: '120px',
 			},
@@ -230,7 +234,7 @@
 				this.getPointData();
 				//获取所有族信息
 				this.getAllFamily();
-				this.initData();
+
 			},
 			mounted: function () {
 				this.getBuilts();
@@ -271,6 +275,14 @@
 					})
 						.then(function (res) {
 							_this.floors = res.data.FloorList;
+							_this.floors.splice(0, 0, {
+								"FloorId": "",
+								"FloorLocalId": "lc002",
+								"FloorLocalName": "未归类",
+								"FloorName": "002楼层",
+								"FloorSequenceId": -2,
+								"FloorType": 1
+							})
 						})
 						.catch(function (err) {
 							config.log(err);
@@ -307,7 +319,7 @@
 
 						type: 'dropdown',
 						source: this.allFamilyData.map(function (family) {
-							return family.name;
+							return family.name + '-' + family.code;
 						})
 					}];
 				},
@@ -355,7 +367,6 @@
 									_this.initSetting(datas.data.Family[0].FmList, header.data.Content);
 								});
 							}
-
 						}))
 						.catch(function (err) {
 							console.log(err)
@@ -385,18 +396,6 @@
 					//								console.log(err);
 					//								return [];
 					//							});
-				},
-				serach: function (day) {
-					var startTime = new Date();
-					var endTime = new Date();
-					if (day) {
-						startTime.setDate(startDate.getDate() - day);
-					} else { //自定义时间
-						dialogFormVisible = true;
-						startDate = this.customDate[0];
-						endTime = this.customDate[1];
-					}
-					this.getLogs(startTime, endTime);
 				},
 				//UI操作
 				selectBuiltChange: function () {
@@ -451,8 +450,8 @@
 				},
 				selected: function (index) {
 					this.clickIndex = index;
-				this.curPointId=	(this.PointList[index+this.nameIndex-1]||{}).Id;
-				console.log(this.curPointId);
+					this.curPointId = (this.PointList[index + this.nameIndex - 1] || {}).Id;
+					console.log(this.curPointId);
 					//切换点位信息
 					this.initData();
 				},
@@ -478,6 +477,18 @@
 				},
 				initSetting: function (datas, headersData) {
 
+					//整理数据
+
+					for (let index = 0; index < datas.length; index++) {
+						const element = datas[index];
+						for (const f of this.allFamilyData) {
+							if (f.code == element.Family) {
+								element.Family = f.name + '-' + f.code;
+								break;
+							}
+						}
+					}
+
 					var _this = this;
 					var hotId = 'hot' + this.tabs[this.tabId].Code;
 					console.log(hotId);
@@ -499,6 +510,15 @@
 						});
 						headers.push(head.info_point_code);
 					}
+					//增加只读Id,为了编辑保存数据用
+					columnsSetting.push({
+						data: 'FmId',
+						type: 'text',
+						readOnly: true
+					});
+					headers.push('ID');
+
+
 					var hotSettings = {
 						data: datas,
 						columns: columnsSetting,
@@ -531,16 +551,20 @@
 							//当数据被编辑时
 							if (source == "edit") {
 								let row = changes[0][0];//当前被编辑的行数
-								let rowData = _this.currHot.getDataAtRow(row);
+								let fmId = _this.currHot.getDataAtRowProp(row, 'FmId');
+								let rowData=_this.currHot.getDataAtRow(row);
 								//检测是否有重复数据，如果有重复数据，直接替换掉
 								for (let index = 0; index < _this.needSaveData.length; index++) {
 									const element = _this.needSaveData[index];
-									if (element.id == rowData.id) {
-
+									if (element.FmId == fmId) {
+										//删除已存在的数据，防止多次添加同一条数据
+										_this.needSaveData.splice(index, 1);
+										break;
 									}
-
 								}
-								_this.needSaveData.push(rowData);
+								_this.needSaveData.push({
+									FmId: fmId, Data: rowData
+								});
 							}
 						}
 					};
@@ -568,23 +592,23 @@
 						"UserId": this.UserId
 					};
 					function getFmData(fmData) {
-						let Fm={};
-						Fm.Checked=fmData.Checked;
-						Fm.Family=fmData.Family;
-						Fm.FmId=fmData.FmId;
-						Fm.FmName=fmData.FmName;
-						Fm.Infos={};
+						let Fm = {};
+						Fm.Checked = fmData.Checked;
+						Fm.Family = fmData.Family;
+						Fm.FmId = fmData.FmId;
+						Fm.FmName = fmData.FmName;
+						Fm.Infos = {};
 						for (let key in fmData) {
-							this.Infos[key]=fmData[key];
+							this.Infos[key] = fmData[key];
 						}
 						return Fm;
 					}
-					let savaDatas=[];
-					this.needSaveData.forEach(function(data){
-						let fm=getFmData(data);
+					let savaDatas = [];
+					this.needSaveData.forEach(function (data) {
+						let fm = getFmData(data.Data);
 						postData.FmList.push(fm);
 					});
-					axios.post(this.baseUrl+'service/fm/update', postData)
+					axios.post(this.baseUrl + 'service/fm/update', postData)
 						.then(function (res) {
 							console.xml(res.data);
 						})
@@ -639,6 +663,8 @@
 						.then(function (res) {
 							_this.PointList = res.data.PointList;
 							_this.pointCount = _this.PointList.length > 4 ? 4 : _this.PointList.length;
+							//加载默认数据
+							_this.initData();
 							console.dir(res.data.PointList);
 						})
 						.catch(function (err) {
@@ -657,8 +683,14 @@
 					var startTime = new Date();
 					var endTime = new Date();
 					if (day) {
+						this.elTopBtn = day;
 						startTime.setDate(startDate.getDate() - day);
 					} else { //自定义时间
+						if (day == 0) {
+							this.elTopBtn = 0;
+						} else {
+							this.elTopBtn = 5;
+						}
 						dialogFormVisible = true;
 						startDate = this.customDate[0];
 						endTime = this.customDate[1];
@@ -666,15 +698,19 @@
 					//this.getLogs(startTime, endTime);
 				},
 				PictureServerUrl: function (key, width, height) {
+					if (!key) {
+						return 'img/1.jpg';
+					}
 					var baseUrl = 'http://192.168.20.225:8080/';
+
 					var url = baseUrl + 'image-service/common/image_get?systemId=dev&key=' + key;
 					if (width && height)
 						url += '&width=' + widht + '&height' + height;
 					return url;
 				},
-				deleteUndefinedProperty:function(data){
-					for(let d in data){
-						if(!data[d]){
+				deleteUndefinedProperty: function (data) {
+					for (let d in data) {
+						if (!data[d]) {
 							delete data[d];
 						}
 					}
