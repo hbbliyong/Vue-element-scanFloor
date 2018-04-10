@@ -362,7 +362,7 @@
 					{
 						data: 'currency',
 						
-						renderer:codeRenderer
+//						renderer:codeRenderer
 					},
 					{
 						data: 'level',
@@ -410,6 +410,9 @@
 							name: '移除此行'
 						}
 					}
+				},
+				afterChange:function(changes,source){
+					console.dirxml(changes);
 				}
 			};
 			var hot = new Handsontable(hotElement, hotSettings);

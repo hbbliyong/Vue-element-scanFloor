@@ -1,647 +1,684 @@
 <!DOCTYPE html>
 <html>
 
-	<head>
-		<meta charset="UTF-8">
-		<title>扫楼数据整理</title>
-		<!-- 引入样式 -->
-		<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+<head>
+	<meta charset="UTF-8">
+	<title>扫楼数据整理</title>
+	<!-- 引入样式 -->
+	<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
 
-		<script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script>
-		<!-- 先引入 Vue -->
-		<script src="https://unpkg.com/vue/dist/vue.js"></script>
-		<!-- 引入组件库 -->
-		<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+	<script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script>
+	<!-- 先引入 Vue -->
+	<script src="https://unpkg.com/vue/dist/vue.js"></script>
+	<!-- 引入组件库 -->
+	<script src="https://unpkg.com/element-ui/lib/index.js"></script>
 
-		<link rel="stylesheet" type="text/css" href="bower_components/handsontable/dist/handsontable.full.min.css">
-		<script src="bower_components/handsontable/dist//handsontable.full.js"></script>
-		<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-		<script src="https://cdn.bootcss.com/underscore.js/1.8.3/underscore-min.js"></script>
-		<script src="https://cdn.bootcss.com/qs/6.5.1/qs.js"></script>
-		<script src="js/tools.js"></script>
-		<style>
-			.image {
-				width: 200px;
-				height: 200px;
-				display: block;
-			}
-			/*点位标签*/
-			
-			.menu,
-			.menu li {
-				list-style: none;
-			}
-			
-			li {
-				float: left;
-				padding: 0px 15px;
-				margin: 10px;
-				display: inline-block;
-				border: 1px solid black;
-			}
-			
-			.img {
-				margin-left: 10px;
-				width: 180px;
-				height: 120px;
-			}
-			
-			.selected {
-				border: 2px solid blue;
-			}
-			
-			.dianwei {
-				width: 215px;
-				height: 180px;
-			}
-			/*.el-row {
+	<link rel="stylesheet" type="text/css" href="bower_components/handsontable/dist/handsontable.full.min.css">
+	<script src="bower_components/handsontable/dist//handsontable.full.js"></script>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+	<script src="https://cdn.bootcss.com/underscore.js/1.8.3/underscore-min.js"></script>
+	<script src="https://cdn.bootcss.com/qs/6.5.1/qs.js"></script>
+	<script src="js/tools.js"></script>
+	<style>
+		.image {
+			width: 200px;
+			height: 200px;
+			display: block;
+		}
+
+		/*点位标签*/
+
+		.menu,
+		.menu li {
+			list-style: none;
+		}
+
+		li {
+			float: left;
+			padding: 0px 15px;
+			margin: 10px;
+			display: inline-block;
+			border: 1px solid black;
+		}
+
+		.img {
+			margin-left: 10px;
+			width: 180px;
+			height: 120px;
+		}
+
+		.selected {
+			border: 2px solid blue;
+		}
+
+		.dianwei {
+			width: 215px;
+			height: 180px;
+		}
+
+		/*.el-row {
 				border: 1px solid black;
 			}*/
-			
-			.el-tab-pane {
-				margin: -13px;
-			}
-		</style>
-	</head>
 
-	<body>
-		<div id="app">
-			<el-row>
-				<el-col :span="16">
-					<div style="height: 20px;padding-top: 5px; margin-left:20px;float: left;">
-						<span>建筑名称:</span>
-						<template>
-							<el-select v-model="bValue" placeholder="请选择" @change='selectBuiltChange'>
-								<el-option v-for="item in builds" :key="item.BuildId" :label="item.BuildLocalName" :value="item.BuildId">
-								</el-option>
-							</el-select>
-						</template>
-						<span>楼层:</span>
-						<template>
-							<el-select v-model="fValue" placeholder="请选择" @change='selectFloorChange'>
-								<el-option v-for="item in floors" :key="item.FloorId" :label="item.FloorLocalName" :value="item.FloorId">
-								</el-option>
-							</el-select>
-						</template>
-					</div>
-				</el-col>
-				<el-col :span="8">
-					<el-button @click="search(30)" type="text">一个月内</el-button><span>|</span>
-					<el-button @click="search(7)" type="text">一周内</el-button><span>|</span>
-					<el-button @click="search(3)" type="text">近三天</el-button><span>|</span>
-					<el-button @click="search(1)" type="text">昨天</el-button><span>|</span>
-					<el-button @click="search(0)" type="text">今天</el-button><span>|</span>
-					<el-button @click="search()" type="text">自定义 {{showDate()}}</el-button>
-				</el-col>
-			</el-row>
-			<el-row v-if="isActive" style="margin-bottom:10px">
-				<el-col :span="1">
-					<div class="arrowBackgroud">
-						<div style="margin-top: 80px;">
-							<el-button type="text" icon="el-icon-d-arrow-left" @click="indexMul()"></el-button>
-						</div>
-					</div>
-				</el-col>
-				<el-col :span="22" style="align-content: center;">
-					<div class="showBorder">
-						<ul class="menu" v-for="(item,index) in 4">
-							<li :class="{'selected':index===clickIndex}" @click="selected(index)">
-								<div class="dianwei">
-									<h3 style="padding: -20px;margin: 5px;">{{((PointList[item+nameIndex-1]||{})).Name}}点位标签</h3>
-									<span style="margin: 10px 0px;">附近资产:{{((PointList[item+nameIndex-1]||{})).Total}}个({{((PointList[item+nameIndex-1]||{})).Nocheck}}个未修订)</span>
-									<a href="#" @click='showPintDetail((PointList[item+nameIndex-1]||{}).Id)'>
-										<!--<img :src="'img/'+(parseInt(item)+nameIndex)+'.jpg'" class="img" />-->
-										<img :src="PictureServerUrl((PointList[item+nameIndex-1]||{}).image)" class="img" />
-									</a>
-								</div>
-							</li>
-						</ul>
-					</div>
-				</el-col>
-				<el-col :span="1">
-					<div class="arrowBackgroud">
-						<div style="margin-top: 80px;">
-							<el-button type="text" icon="el-icon-d-arrow-right" @click="indexAdd()"></el-button>
-						</div>
-					</div>
-				</el-col>
-			</el-row>
-			<el-row :gutter="-20" style="margin-top: -18px;">
-				<el-col :span="4" :offset="10">
-					<el-button type="primary" @click="toggle">显示隐藏</el-button>
-				</el-col>
-			</el-row>
-			<!--保存操作-->
-			<el-row>
-				<el-col :span="8" :offset="1">
-					<el-button type="text">全部</el-button><span> |</span>
-					<el-button type="text">未完成修订</el-button>
-				</el-col>
-				<el-col :span="4" :offset="11">
-					<el-button type="text" icon="el-icon-tickets" @click="saveData">保存所有修改</el-button>
-				</el-col>
-			</el-row>
-			<el-row>
-				<div>
-					<el-tabs v-model="tabId" type="border-card" @tab-click="tabClick(tabId)">
-						<el-tab-pane v-for="tab in tabs" :label="tab.Name" :key="tab.Code">
-							<div :id="'hot'+tab.Code" class="showData"></div>
-						</el-tab-pane>
-					</el-tabs>
+		.el-tab-pane {
+			margin: -13px;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="app">
+		<el-row>
+			<el-col :span="16">
+				<div style="height: 20px;padding-top: 5px; margin-left:20px;float: left;">
+					<span>建筑名称:</span>
+					<template>
+						<el-select v-model="bValue" placeholder="请选择" @change='selectBuiltChange'>
+							<el-option v-for="item in builds" :key="item.BuildId" :label="item.BuildLocalName" :value="item.BuildId">
+							</el-option>
+						</el-select>
+					</template>
+					<span>楼层:</span>
+					<template>
+						<el-select v-model="fValue" placeholder="请选择" @change='selectFloorChange'>
+							<el-option v-for="item in floors" :key="item.FloorId" :label="item.FloorLocalName" :value="item.FloorId">
+							</el-option>
+						</el-select>
+					</template>
 				</div>
-			</el-row>
-			<el-row>
+			</el-col>
+			<el-col :span="8">
+				<el-button @click="search(30)" type="text">一个月内</el-button>
+				<span>|</span>
+				<el-button @click="search(7)" type="text">一周内</el-button>
+				<span>|</span>
+				<el-button @click="search(3)" type="text">近三天</el-button>
+				<span>|</span>
+				<el-button @click="search(1)" type="text">昨天</el-button>
+				<span>|</span>
+				<el-button @click="search(0)" type="text">今天</el-button>
+				<span>|</span>
+				<el-button @click="search()" type="text">自定义 {{showDate()}}</el-button>
+			</el-col>
+		</el-row>
+		<el-row v-if="isActive" style="margin-bottom:10px">
+			<el-col :span="1">
+				<div class="arrowBackgroud">
+					<div style="margin-top: 80px;">
+						<el-button type="text" icon="el-icon-d-arrow-left" @click="indexMul()"></el-button>
+					</div>
+				</div>
+			</el-col>
+			<el-col :span="22" style="align-content: center;">
 				<div class="showBorder">
-					<ul class="menu" v-for="(item,index) in 4">
+					<ul class="menu" v-for="(item,index) in pointCount">
 						<li :class="{'selected':index===clickIndex}" @click="selected(index)">
 							<div class="dianwei">
-								<h3 style="padding: -20px;margin: 5px;">{{item}}照片</h3>
-								<img :src="'img/'+(item+nameIndex)+'.jpg'" class="img" />
+								<h3 style="padding: -20px;margin: 5px;">{{((PointList[item+nameIndex-1]||{})).Name}}</h3>
+								<span style="margin: 10px 0px;">附近资产:{{((PointList[item+nameIndex-1]||{})).Total}}个({{((PointList[item+nameIndex-1]||{})).Nocheck}}个未修订)</span>
+								<a href="#" @click='showPintDetail((PointList[item+nameIndex-1]||{}).Id)'>
+									<!--<img :src="'img/'+(parseInt(item)+nameIndex)+'.jpg'" class="img" />-->
+									<img :src="PictureServerUrl((PointList[item+nameIndex-1]||{}).image)" class="img" />
+								</a>
 							</div>
 						</li>
 					</ul>
 				</div>
-			</el-row>
-
-			</el-row>
-			<el-dialog :visible.sync="showDianWei" width="375px">
-				<iframe id='pointDetail' src="dianwei-detail.html?pointId=curPointId" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe>
-			</el-dialog>
-			<el-dialog title="自定义扫楼时间段" :visible.sync="dialogFormVisible">
-				<el-form>
-					<el-form-item label="扫楼时间" :label-width="formLabelWidth">
-						<el-date-picker v-model="customDate" type="daterange" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']">
-						</el-date-picker>
-					</el-form-item>
-				</el-form>
-				<div slot="footer" class="dialog-footer">
-					<el-button @click="dialogFormVisible = false">取 消</el-button>
-					<el-button type="primary" @click="dialogFormVisible = false">确 定</el-button>
+			</el-col>
+			<el-col :span="1">
+				<div class="arrowBackgroud">
+					<div style="margin-top: 80px;">
+						<el-button type="text" icon="el-icon-d-arrow-right" @click="indexAdd()"></el-button>
+					</div>
 				</div>
-			</el-dialog>
-		</div>
-		<script>
-			/*API测试地址*/
-			/*http://172.16.3.187:8080/ScanBuilding/swagger-ui.html#/*/
-			var app = new Vue({
-				el: '#app',
-				data: {
-					projId: 'Pj1101080001',
-					UserId: 'revit',
-					baseUrl: 'http://172.16.3.187:8080/ScanBuilding/',
-					builds: [],
-					bValue: '',
-					floors: [],
-					fValue: '',
-					clickIndex: '',
-					nameIndex: 0,
-					isActive: true,
-					allDatas: [],
-					tabId: '0',
-					PointList: [],
-					curPointId: '',
-					imgData: ['1', '2', '3', '4'],
-					tabs: [],
-					hotElements: [],
-					currHot: {},
-					allFamilyData: [], //所有族数据
-					columnsSetting: [{
-							data: 'id',
-							type: 'numeric',
-							width: 40
-						},
-						{
-							data: 'currencyCode',
-							type: 'text'
-						}, {
-							data: 'currency',
+			</el-col>
+		</el-row>
+		<el-row :gutter="-20" style="margin-top: -18px;">
+			<el-col :span="4" :offset="10">
+				<el-button type="primary" @click="toggle">显示隐藏</el-button>
+			</el-col>
+		</el-row>
+		<!--保存操作-->
+		<el-row>
+			<el-col :span="8" :offset="1">
+				<el-button type="text">全部</el-button>
+				<span> |</span>
+				<el-button type="text">未完成修订</el-button>
+			</el-col>
+			<el-col :span="4" :offset="11">
+				<el-button type="text" icon="el-icon-tickets" @click="saveData">保存所有修改</el-button>
+			</el-col>
+		</el-row>
+		<el-row>
+			<div>
+				<el-tabs v-model="tabId" type="border-card" @tab-click="tabClick(tabId)">
+					<el-tab-pane v-for="tab in tabs" :label="tab.Name" :key="tab.Code">
+						<div :id="'hot'+tab.Code" class="showData"></div>
+					</el-tab-pane>
+				</el-tabs>
+			</div>
+		</el-row>
+		<el-row>
+			<div class="showBorder">
+				<ul class="menu" v-for="(item,index) in 4">
+					<li :class="{'selected':index===clickIndex}" @click="selected(index)">
+						<div class="dianwei">
+							<h3 style="padding: -20px;margin: 5px;">{{item}}照片</h3>
+							<img :src="'img/'+(item+nameIndex)+'.jpg'" class="img" />
+						</div>
+					</li>
+				</ul>
+			</div>
+		</el-row>
 
-							type: 'dropdown',
-							source: ['yellow', 'red', 'orange', 'green', 'blue', 'gray', 'black', 'white']
-						},
-						//{
-						//							data: 'level',
-						//							type: 'numeric',
-						//							numericFormat: {
-						//								pattern: '0.0000'
-						//							}
-						//						},
-						//						{
-						//							data: 'units',
-						//							type: 'text'
-						//						},
-						//						{
-						//							data: 'asOf',
-						//							type: 'date',
-						//							dateFormat: 'MM/DD/YYYY'
-						//						},
-						//						{
-						//							data: 'onedChng',
-						//							type: 'numeric',
-						//							numericFormat: {
-						//								pattern: '0.00%'
-						//							}
-						//						}
-					],
-					needSaveData: [],
-					showDianWei: false,
-					dialogFormVisible: false,
-					showData: [],
-					customDate: [],
-					formLabelWidth: '120px',
+		</el-row>
+		<el-dialog :visible.sync="showDianWei" width="375px">
+			<iframe id='pointDetail' src="dianwei-detail.html?pointId=curPointId" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe>
+		</el-dialog>
+		<el-dialog title="自定义扫楼时间段" :visible.sync="dialogFormVisible">
+			<el-form>
+				<el-form-item label="扫楼时间" :label-width="formLabelWidth">
+					<el-date-picker v-model="customDate" type="daterange" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']">
+					</el-date-picker>
+				</el-form-item>
+			</el-form>
+			<div slot="footer" class="dialog-footer">
+				<el-button @click="dialogFormVisible = false">取 消</el-button>
+				<el-button type="primary" @click="dialogFormVisible = false">确 定</el-button>
+			</div>
+		</el-dialog>
+	</div>
+	<script>
+		/*API测试地址*/
+		/*http://172.16.3.187:8080/ScanBuilding/swagger-ui.html#/*/
+		var app = new Vue({
+			el: '#app',
+			data: {
+				projId: 'Pj1101080001',
+				UserId: 'revit',
+				baseUrl: 'http://172.16.0.189:8080/ScanBuilding/',
+				builds: [],
+				bValue: '',
+				floors: [],
+				fValue: '',
+				clickIndex: '',
+				nameIndex: 0,
+				pointCount: 4,
+				isActive: true,
+				allDatas: [],
+				tabId: '0',
+				PointList: [],
+				curPointId: '',
+				imgData: ['1', '2', '3', '4'],
+				tabs: [],
+				hotElements: [],
+				currHot: {},
+				allFamilyData: [], //所有族数据
+				needSaveData: [],
+				showDianWei: false,
+				dialogFormVisible: false,
+				showData: [],
+				customDate: [],
+				formLabelWidth: '120px',
+			},
+			created: function () {
+				//TODO:获取请求参数中的projId和UserId
+				this.getPointData();
+				//获取所有族信息
+				this.getAllFamily();
+				this.initData();
+			},
+			mounted: function () {
+				this.getBuilts();
+				//this.getFloors();
+				//初始化设备类型
+				//this.getFamilyDataParamData();
+
+				//					var _this = this;
+				//					var tabData = this.tabs[0];
+				//					//加载数据
+				//					this.getParamHeader(tabData.Code, function(headData) {
+				//						_this.initSetting(tabData.FmList, headData);
+				//					});
+				//this.initSetting();
+			},
+			methods: {
+				getBuilts: function () {
+					var _this = this;
+					axios.post(this.baseUrl + 'service/building/query', {
+						"Comming": "revit",
+						"ProjId": _this.projId,
+						"UserId": _this.UserId
+					})
+						.then(function (res) {
+							_this.builds = res.data.BuildList;
+						})
+						.catch(function (err) {
+							config.log(err);
+						})
 				},
-				created: function() {
-					//TODO:获取请求参数中的projId和UserId
-					this.getPointData();
-					//获取所有族信息
-					this.getAllFamily();
-					this.initData();
+				getFloors: function () {
+					var _this = this;
+					axios.post(this.baseUrl + 'service/building/floor', {
+						"Comming": "revit",
+						"BuildId": _this.bValue,
+						"ProjId": _this.projId,
+						"UserId": _this.UserId
+					})
+						.then(function (res) {
+							_this.floors = res.data.FloorList;
+						})
+						.catch(function (err) {
+							config.log(err);
+						})
 				},
-				mounted: function() {
-					this.getBuilts();
-					//this.getFloors();
-					//初始化设备类型
-					//this.getFamilyDataParamData();
-
-					//					var _this = this;
-					//					var tabData = this.tabs[0];
-					//					//加载数据
-					//					this.getParamHeader(tabData.Code, function(headData) {
-					//						_this.initSetting(tabData.FmList, headData);
-					//					});
-					//this.initSetting();
+				//默认列名
+				getDefaultHeader: function () {
+					return ['是否完成修订', '点位标签', '设备族'];
 				},
-				methods: {
-					getBuilts: function() {
-						var _this = this;
-						axios.post(this.baseUrl + 'service/building/query', {
-								"Comming": "revit",
-								"ProjId": _this.projId,
-								"UserId": _this.UserId
-							})
-							.then(function(res) {
-								_this.builds = res.data.BuildList;
-							})
-							.catch(function(err) {
-								config.log(err);
-							})
-					},
-					getFloors: function() {
-						var _this = this;
-						axios.post(this.baseUrl + 'service/building/floor', {
-								"Comming": "revit",
-								"BuildId": _this.bValue,
-								"ProjId": _this.projId,
-								"UserId": _this.UserId
-							})
-							.then(function(res) {
-								_this.floors = res.data.FloorList;
-							})
-							.catch(function(err) {
-								config.log(err);
-							})
-					},
-					//默认列名
-					getDefaultHeader: function() {
-						return ['是否完成修订', '点位标签', '设备族'];
-					},
-					//默认字段
-					getDefaultColumnSetting: function() {
-						var flagRenderer = function(instance, td, row, col, prop, value, cellProperties) {
-							value = value == 0 ? "未完成修订" : "已完成修订";
-							while(td.firstChild) {
-								td.removeChild(td.firstChild);
-							}
-							var textNode = document.createTextNode(value === null ? '' : value);
+				//默认字段
+				getDefaultColumnSetting: function () {
+					var flagRenderer = function (instance, td, row, col, prop, value, cellProperties) {
+						value = value == 0 ? "未完成修订" : "已完成修订";
+						while (td.firstChild) {
+							td.removeChild(td.firstChild);
+						}
+						var textNode = document.createTextNode(value === null ? '' : value);
 
-							td.appendChild(textNode);
-						};
-						return [{
-							data: 'Checked',
-							//								type: 'text',
-							width: 50,
-							//renderer: flagRenderer
-							type: 'checkbox',
-							checkedTemplate: '1',
-							uncheckedTemplate: '0'
-						}, {
-							data: 'PointName',
-							type: 'text'
-						}, {
-							data: 'Family',
+						td.appendChild(textNode);
+					};
+					return [{
+						data: 'Checked',
+						//								type: 'text',
+						width: 50,
+						//renderer: flagRenderer
+						type: 'checkbox',
+						checkedTemplate: '1',
+						uncheckedTemplate: '0'
+					}, {
+						data: 'PointName',
+						type: 'text'
+					}, {
+						data: 'Family',
 
-							type: 'dropdown',
-							source: this.allFamilyData.map(function(family) {
-								return family.name;
-							})
-						}];
-					},
+						type: 'dropdown',
+						source: this.allFamilyData.map(function (family) {
+							return family.name;
+						})
+					}];
+				},
 
-					//数据加载
-					initData: function() {
-						console.log(this.tabId, "click", new Date())
-						var _this = this;
-						var postData = {
-							"FmId": "Pe11111111112222222222333333333300", //测试用
-//							"BuildId": "string",
-							"Comming": "revit",
-//							"FloorId": "string",
-//							
-//							"PointId": "string",
-//							"ProjId": "string",
-							"UserId": this.UserId
-						};
-						var headerUrl = 'http://192.168.30.96:8080/saas-manage/app/restTemplateService/queryObjectPropertyMapping';
-						var headerPostData = {
-							"user_id":  this.UserId,
-							"code": "eq-gen", //通用设备信息点
-							"type": "equipFamily",
-							"app_type": "revit"
-						};
+				//数据加载
+				initData: function () {
+					var _this = this;
+					var postData = {
+						//  "FmId": "Pe11111111112222222222333333333300", //测试用
+						"BuildId": this.bValue,
+						"Comming": "revit",
+						"FloorId": this.fValue,
+						"PointId": this.curPointId,
+						"ProjId": this.projId,
+						"UserId": this.UserId
+					};
+					this.deleteUndefinedProperty(postData);
+					var headerUrl = 'http://192.168.30.96:8080/saas-manage/app/restTemplateService/queryObjectPropertyMapping';
+					var headerPostData = {
+						"user_id": this.UserId,
+						"code": "eq-gen", //通用设备信息点
+						"type": "equipFamily",
+						"app_type": "revit"
+					};
 
-						axios.all([
-								axios.post(_this.baseUrl + "service/fm/queryRevit", postData),
-								axios.post(headerUrl, headerPostData)
-							])
-							.then(axios.spread(function(datas, header) {
-								_this.allDatas = datas.data;
-								//所有点位数据中族分类
-								datas.data.Family.forEach(function(data) {
-									_this.tabs.push({
-										Code: data.Code,
-										Name: data.Name,
-										Count: data.FmList.length,
-										FmList: data.FmList
-									});
+					axios.all([
+						axios.post(_this.baseUrl + "service/fm/queryRevit", postData),
+						axios.post(headerUrl, headerPostData)
+					])
+						.then(axios.spread(function (datas, header) {
+							_this.allDatas = datas.data;
+							_this.tabs = [];//清空tab
+							//所有点位数据中族分类
+							datas.data.Family.forEach(function (data) {
+								_this.tabs.push({
+									Code: data.Code,
+									Name: data.Name,
+									Count: data.FmList.length,
+									FmList: data.FmList
 								});
-								//默认显示未分类设备
-								_this.$nextTick(function() {
+							});
+							//默认显示未分类设备
+							if (datas.data.Family[0]) {
+								_this.$nextTick(function () {
 									_this.initSetting(datas.data.Family[0].FmList, header.data.Content);
 								});
-							}))
-							.catch(function(err) {
-								console.log(err)
-							})
-					},
-					//获取所有的族列表
-					getAllFamily: function() {
-						var _this = this;
-						axios.get(this.baseUrl + "service/dict/equipment_family")
-							.then(function(res) {
-								_this.allFamilyData = res.data.Content;
-							})
-							.catch(function(err) {
-								console.log(err);
-							});
-					},
-					//获取所有族参数
-					getFamilyParamData: function() {
-						var _this = this;
-						//						axios.get("http://localhost:8080/mbi/getFamilyData")
-						//							.then(function(res) {
-						//								_this.tabs = res.data;
-						//
-						//								return res.data;
-						//							})
-						//							.catch(function(err) {
-						//								console.log(err);
-						//								return [];
-						//							});
-					},
-					serach: function(day) {
-						var startTime = new Date();
-						var endTime = new Date();
-						if(day) {
-							startTime.setDate(startDate.getDate() - day);
-						} else { //自定义时间
-							dialogFormVisible = true;
-							startDate = this.customDate[0];
-							endTime = this.customDate[1];
-						}
-						this.getLogs(startTime, endTime);
-					},
-					//UI操作
-					selectBuiltChange: function() {
-						this.getFloors();
-						console.log(this.bValue);
-					},
-					selectFloorChange: function() {
-						//加载点位信息
-						this.getPointData();
-						console.log(this.fValue);
-					},
-					showPintDetail: function(pointId) {
-						this.showDianWei = true;
-						var src = 'dianwei-detail.html?pointId=' + pointId;
-						document.getElementById('pointDetail').src = src;
-					},
-					tabClick: function() {
-						var tabData = this.tabs[this.tabId]
-						var hotId = 'hot' + tabData.Code;
-						//检测是否已加载
-						for(hot in this.hotElements) {
-							if(this.hotElements[hot].rootElement.id == hotId) {
-								this.currHot = this.hotElements[hot];
-								return;
 							}
-						}
-						var _this = this;
-						//加载数据
-						this.getParamHeader(tabData.Code, function(headData) {
-							_this.initSetting(tabData.FmList, headData);
+
+						}))
+						.catch(function (err) {
+							console.log(err)
+						})
+				},
+				//获取所有的族列表
+				getAllFamily: function () {
+					var _this = this;
+					axios.get(this.baseUrl + "service/dict/equipment_family")
+						.then(function (res) {
+							_this.allFamilyData = res.data.Content;
+						})
+						.catch(function (err) {
+							console.log(err);
 						});
-					},
-					getParamHeader: function(familyCode, fn) {
-						var _this = this;
-
-						var headerUrl = 'http://192.168.30.96:8080/saas-manage/app/restTemplateService/queryObjectPropertyMapping';
-						var headerPostData = {
-							"user_id":  this.UserId,
-							"code": familyCode,
-							"type": "equipFamily",
-							"app_type": "revit"
-						};
-
-						axios.post(headerUrl, headerPostData)
-							.then(function(datas) {
-								//默认显示未分类设备
-								fn(datas.data.Content);
-							})
-							.catch(function(err) {
-								console.log(err)
-							})
-					},
-					selected: function(index) {
-						this.clickIndex = index;
-						//切换点位信息
-						this.initData();
-					},
-					indexAdd: function() {
-						if(this.clickIndex < 3)
-							this.clickIndex += 1;
-						else {
-							if(this.nameIndex < this.PointList.length)
-								this.nameIndex += 1;
-						}
-						console.log(this.nameIndex)
-					},
-					indexMul: function() {
-						if(this.clickIndex > 0)
-							this.clickIndex -= 1;
-						else {
-							if(this.nameIndex > 0)
-								this.nameIndex -= 1;
-						}
-					},
-					toggle: function() {
-						this.isActive = !this.isActive
-					},
-					initSetting: function(datas, headersData) {
-
-						var _this = this;
-						var hotId = 'hot' + this.tabs[this.tabId].Code;
-						console.log(hotId);
-						//检测是否已加载
-						for(hot in this.hotElements) {
-							if(this.hotElements[hot].rootElement.id == hotId) {
-								this.currHot = this.hotElements[hot];
-								return;
-							}
-						}
-						var hotElement = document.querySelector('#' + hotId);
-						var columnsSetting = this.getDefaultColumnSetting();
-						var headers = this.getDefaultHeader();
-						//处理列头与数据参数
-						for(var head of headersData) {
-							columnsSetting.push({
-								data: head.infopoint_code,
-								type: 'text'
-							});
-							headers.push(head.info_point_code);
-						}
-						var hotSettings = {
-							data: datas,
-							columns: columnsSetting,
-							stretchH: 'all',
-							//width: 806,
-							autoWrapRow: true,
-							height: 487,
-							//maxRows: 25,
-							rowHeaders: true,
-							colHeaders: headers,
-							contextMenu: {
-								items: {
-									'remove_row': {
-										name: '移除此行',
-										//										callback:function(){
-										//											
-										//										}
-									},
-									//									'row_below': {
-									//										name: '添加行'
-									//									}
-								}
-							},
-							//delete
-							beforeRemoveRow: function(index, amout) {
-								return _this.confirmDelete();
-							},
-							//modifier
-							afterChange: function(changes, source) {
-
-							}
-						};
-						var hot = new Handsontable(hotElement, hotSettings);
-						hot.render();
-						this.hotElements.push(hot);
-						console.log("加载数据到handsontable")
-					},
-					saveData: function() {
-
-					},
-					confirmDelete: function() {
-						var _this = this;
-
-						var data = this.$confirm('确定要删除此项数据吗?', '提示', {
-							confirmButtonText: '确定',
-							cancelButtonText: '取消',
-							type: 'warning'
-						}).then(function() {
-							_this.$message({
-								type: 'success',
-								message: '删除成功!'
-							});
-							return true;
-						}).catch(function() {
-							_this.$message({
-								type: 'info',
-								message: '已取消删除'
-							});
-							return false;
-						});
-						return data;
-					},
-					test: function(data) {
-						console.dirxml(data);
-					},
-					getPointData: function() {
-						//默认加载全部
-						var _this = this;
-						var postData = {
-							"Comming": "revit",
-							//								"BuildId": _this.bValue,
-							"ProjId": _this.projId,
-							//								"FloorId": _this.fValue,
-							"UserId": _this.UserId
-						};
-
-						if(_this.bValue) {
-							postData.BuildId = _this.bValue;
-						}
-						if(_this.fValue) {
-							postData.FloorId = _this.fValue;
-						}
-
-						axios.post(this.baseUrl + 'service/fm/point_group', postData)
-							.then(function(res) {
-								_this.PointList = res.data.PointList;
-
-								console.dir(res.data.PointList);
-							})
-							.catch(function(err) {
-								console.log(err);
-							})
-					},
-					showDate: function() {
-						if(this.customDate == undefined || this.customDate.length == 0)
-							return undefined;
-						else {
-							var reg = /\d{4}-\d{2}-\d{2}/;
-							return '  (' + reg.exec(this.customDate[0].toISOString())[0] + '~' + reg.exec(this.customDate[1].toISOString())[0] + ')';
-						}
-					},
-					search: function(day) {
-						var startTime = new Date();
-						var endTime = new Date();
-						if(day) {
-							startTime.setDate(startDate.getDate() - day);
-						} else { //自定义时间
-							dialogFormVisible = true;
-							startDate = this.customDate[0];
-							endTime = this.customDate[1];
-						}
-						//this.getLogs(startTime, endTime);
-					},
-					PictureServerUrl: function(key, width, height) {
-						var baseUrl = 'http://192.168.20.225:8080/';
-						var url = baseUrl + 'image-service/common/image_get?systemId=dev&key=' + key;
-						if(width && height)
-							url += '&width=' + widht + '&height' + height;
-						return url;
+				},
+				//获取所有族参数
+				getFamilyParamData: function () {
+					var _this = this;
+					//						axios.get("http://localhost:8080/mbi/getFamilyData")
+					//							.then(function(res) {
+					//								_this.tabs = res.data;
+					//
+					//								return res.data;
+					//							})
+					//							.catch(function(err) {
+					//								console.log(err);
+					//								return [];
+					//							});
+				},
+				serach: function (day) {
+					var startTime = new Date();
+					var endTime = new Date();
+					if (day) {
+						startTime.setDate(startDate.getDate() - day);
+					} else { //自定义时间
+						dialogFormVisible = true;
+						startDate = this.customDate[0];
+						endTime = this.customDate[1];
 					}
+					this.getLogs(startTime, endTime);
+				},
+				//UI操作
+				selectBuiltChange: function () {
+					this.getFloors();
+					console.log(this.bValue);
+				},
+				selectFloorChange: function () {
+					//加载点位信息
+					this.getPointData();
+					console.log(this.fValue);
+				},
+				showPintDetail: function (pointId) {
+					this.showDianWei = true;
+					var src = 'dianwei-detail.html?pointId=' + pointId;
+					document.getElementById('pointDetail').src = src;
+				},
+				tabClick: function () {
+					var tabData = this.tabs[this.tabId]
+					var hotId = 'hot' + tabData.Code;
+					//检测是否已加载
+					for (hot in this.hotElements) {
+						if (this.hotElements[hot].rootElement.id == hotId) {
+							this.currHot = this.hotElements[hot];
+							return;
+						}
+					}
+					var _this = this;
+					//加载数据
+					this.getParamHeader(tabData.Code, function (headData) {
+						_this.initSetting(tabData.FmList, headData);
+					});
+				},
+				getParamHeader: function (familyCode, fn) {
+					var _this = this;
+
+					var headerUrl = 'http://192.168.30.96:8080/saas-manage/app/restTemplateService/queryObjectPropertyMapping';
+					var headerPostData = {
+						"user_id": this.UserId,
+						"code": familyCode,
+						"type": "equipFamily",
+						"app_type": "revit"
+					};
+
+					axios.post(headerUrl, headerPostData)
+						.then(function (datas) {
+							//默认显示未分类设备
+							fn(datas.data.Content);
+						})
+						.catch(function (err) {
+							console.log(err)
+						})
+				},
+				selected: function (index) {
+					this.clickIndex = index;
+				this.curPointId=	(this.PointList[index+this.nameIndex-1]||{}).Id;
+				console.log(this.curPointId);
+					//切换点位信息
+					this.initData();
+				},
+				indexAdd: function () {
+					if (this.clickIndex < 3)
+						this.clickIndex += 1;
+					else {
+						if (this.nameIndex < this.PointList.length)
+							this.nameIndex += 1;
+					}
+					console.log(this.nameIndex)
+				},
+				indexMul: function () {
+					if (this.clickIndex > 0)
+						this.clickIndex -= 1;
+					else {
+						if (this.nameIndex > 0)
+							this.nameIndex -= 1;
+					}
+				},
+				toggle: function () {
+					this.isActive = !this.isActive
+				},
+				initSetting: function (datas, headersData) {
+
+					var _this = this;
+					var hotId = 'hot' + this.tabs[this.tabId].Code;
+					console.log(hotId);
+					//检测是否已加载
+					for (hot in this.hotElements) {
+						if (this.hotElements[hot].rootElement.id == hotId) {
+							this.currHot = this.hotElements[hot];
+							return;
+						}
+					}
+					var hotElement = document.querySelector('#' + hotId);
+					var columnsSetting = this.getDefaultColumnSetting();
+					var headers = this.getDefaultHeader();
+					//处理列头与数据参数
+					for (var head of headersData) {
+						columnsSetting.push({
+							data: head.infopoint_code,
+							type: 'text'
+						});
+						headers.push(head.info_point_code);
+					}
+					var hotSettings = {
+						data: datas,
+						columns: columnsSetting,
+						stretchH: 'all',
+						//width: 806,
+						autoWrapRow: true,
+						height: 487,
+						//maxRows: 25,
+						rowHeaders: true,
+						colHeaders: headers,
+						contextMenu: {
+							items: {
+								'remove_row': {
+									name: '移除此行',
+									//										callback:function(){
+									//											
+									//										}
+								},
+								//									'row_below': {
+								//										name: '添加行'
+								//									}
+							}
+						},
+						//delete
+						beforeRemoveRow: function (index, amout) {
+							return _this.confirmDelete();
+						},
+						//modifier
+						afterChange: function (changes, source) {
+							//当数据被编辑时
+							if (source == "edit") {
+								let row = changes[0];//当前被编辑的行数
+								let rowData = this.currHot.getDataAtRow(row);
+								//检测是否有重复数据，如果有重复数据，直接替换掉
+								for (let index = 0; index < this.needSaveData.length; index++) {
+									const element = array[index];
+									if (element.id == rowData.id) {
+
+									}
+
+								}
+								this.needSaveData.push(rowData);
+							}
+						}
+					};
+					var hot = new Handsontable(hotElement, hotSettings);
+					hot.render();
+					this.hotElements.push(hot);
+					this.currHot = hot;
+					console.log("加载数据到handsontable")
+				},
+				//保存所有修改的数据
+				saveData: function () {
+					let postData = {
+						"Comming": "revit",
+						"FmList": [
+							// {
+							// 	"Checked": 0,
+							// 	"Family": "string",//编码
+							// 	"FmId": "string",
+							// 	"FmName": "string",
+							// 	"Infos": {
+							// 	}
+							// }
+						],
+						"ProjId": this.projId,
+						"UserId": this.UserId
+					};
+					function getFmData(fmData) {
+						let Fm={};
+						Fm.Checked=fmData.Checked;
+						Fm.Family=fmData.Family;
+						Fm.FmId=fmData.FmId;
+						Fm.FmName=fmData.FmName;
+						Fm.Infos={};
+						for (let key in fmData) {
+							this.Infos[key]=fmData[key];
+						}
+						return this;
+					}
+					let savaDatas=[];
+					this.saveData.forEach(function(data){
+						let fm=getFmData(data);
+						postData.FmList.push(fm);
+					});
+					axios.post(this.baseUrl+'service/fm/update', postData)
+						.then(function (res) {
+							console.xml(res.data);
+						})
+						.catch(function (err) {
+
+						})
+				},
+				confirmDelete: function () {
+					var _this = this;
+
+					var data = this.$confirm('确定要删除此项数据吗?', '提示', {
+						confirmButtonText: '确定',
+						cancelButtonText: '取消',
+						type: 'warning'
+					}).then(function () {
+						_this.$message({
+							type: 'success',
+							message: '删除成功!'
+						});
+						return true;
+					}).catch(function () {
+						_this.$message({
+							type: 'info',
+							message: '已取消删除'
+						});
+						return false;
+					});
+					return data;
+				},
+				test: function (data) {
+					console.dirxml(data);
+				},
+				getPointData: function () {
+					//默认加载全部
+					var _this = this;
+					var postData = {
+						"Comming": "revit",
+						//								"BuildId": _this.bValue,
+						"ProjId": _this.projId,
+						//								"FloorId": _this.fValue,
+						"UserId": _this.UserId
+					};
+
+					if (_this.bValue) {
+						postData.BuildId = _this.bValue;
+					}
+					if (_this.fValue) {
+						postData.FloorId = _this.fValue;
+					}
+
+					axios.post(this.baseUrl + 'service/fm/point_group', postData)
+						.then(function (res) {
+							_this.PointList = res.data.PointList;
+							_this.pointCount = _this.PointList.length > 4 ? 4 : _this.PointList.length;
+							console.dir(res.data.PointList);
+						})
+						.catch(function (err) {
+							console.log(err);
+						})
+				},
+				showDate: function () {
+					if (this.customDate == undefined || this.customDate.length == 0)
+						return undefined;
+					else {
+						var reg = /\d{4}-\d{2}-\d{2}/;
+						return '  (' + reg.exec(this.customDate[0].toISOString())[0] + '~' + reg.exec(this.customDate[1].toISOString())[0] + ')';
+					}
+				},
+				search: function (day) {
+					var startTime = new Date();
+					var endTime = new Date();
+					if (day) {
+						startTime.setDate(startDate.getDate() - day);
+					} else { //自定义时间
+						dialogFormVisible = true;
+						startDate = this.customDate[0];
+						endTime = this.customDate[1];
+					}
+					//this.getLogs(startTime, endTime);
+				},
+				PictureServerUrl: function (key, width, height) {
+					var baseUrl = 'http://192.168.20.225:8080/';
+					var url = baseUrl + 'image-service/common/image_get?systemId=dev&key=' + key;
+					if (width && height)
+						url += '&width=' + widht + '&height' + height;
+					return url;
+				},
+				deleteUndefinedProperty:function(data){
+					for(let d in data){
+						if(!data[d]){
+							delete data[d];
+						}
+					}
+					return data;
 				}
-			});
-		</script>
-	</body>
+			}
+		});
+	</script>
+</body>
 
 </html>
