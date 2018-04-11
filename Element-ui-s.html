@@ -6,7 +6,7 @@
 	<title>扫楼数据整理</title>
 	<!-- 引入样式 -->
 	<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
-
+	<link rel="stylesheet" href="css/font-awesome.css" />
 	<script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script>
 	<!-- 先引入 Vue -->
 	<script src="https://unpkg.com/vue/dist/vue.js"></script>
@@ -18,7 +18,19 @@
 	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 	<script src="https://cdn.bootcss.com/underscore.js/1.8.3/underscore-min.js"></script>
 	<script src="https://cdn.bootcss.com/qs/6.5.1/qs.js"></script>
+	<script src="bower_components/moment/moment.js"></script>
 	<script src="js/tools.js"></script>
+	<style type="text/css">
+		[class^="el-icon-fa"],
+		[class*=" el-icon-fa"] {
+			display: inline-block;
+			font: normal normal normal 14px/1 FontAwesome!important;
+			font-size: inherit;
+			text-rendering: auto;
+			-webkit-font-smoothing: antialiased;
+			-moz-osx-font-smoothing: grayscale;
+		}
+	</style>
 	<style>
 		.image {
 			width: 200px;
@@ -75,7 +87,7 @@
 
 <body>
 	<div id="app">
-		<el-row>
+		<el-row :gutter="10">
 			<el-col :span="16">
 				<div style="height: 20px;padding-top: 5px; margin-left:20px;float: left;">
 					<span>建筑名称:</span>
@@ -108,7 +120,7 @@
 				<el-button @click="search()" :class=" elTopBtn == 5 ? 'button_active' : ''" type="text">自定义 {{showDate()}}</el-button>
 			</el-col>
 		</el-row>
-		<el-row v-if="isActive" style="margin-bottom:10px">
+		<el-row v-if="isActive" style="margin-bottom:0px">
 			<el-col :span="1">
 				<div class="arrowBackgroud">
 					<div style="margin-top: 80px;">
@@ -140,9 +152,13 @@
 				</div>
 			</el-col>
 		</el-row>
-		<el-row :gutter="-20" style="margin-top: -18px;">
+		<el-row :gutter="10" style="margin-top: 0px;">
 			<el-col :span="4" :offset="10">
-				<el-button type="primary" @click="toggle">显示隐藏</el-button>
+				<!-- <el-button  icon='fa fa-angle-double-up fa-2x' @click="toggle">显示隐藏</el-button> -->
+				<div style="width: 200px;height: 25px;" @click="toggle">
+					<span>xxxx点位标签</span>
+					<i class="fa fa-angle-double-up"/>
+				</div>
 			</el-col>
 		</el-row>
 		<!--保存操作-->
@@ -254,10 +270,10 @@
 				getBuilts: function () {
 					var _this = this;
 					axios.post(this.baseUrl + 'service/building/query', {
-						"Comming": "revit",
-						"ProjId": _this.projId,
-						"UserId": _this.UserId
-					})
+							"Comming": "revit",
+							"ProjId": _this.projId,
+							"UserId": _this.UserId
+						})
 						.then(function (res) {
 							_this.builds = res.data.BuildList;
 						})
@@ -268,11 +284,11 @@
 				getFloors: function () {
 					var _this = this;
 					axios.post(this.baseUrl + 'service/building/floor', {
-						"Comming": "revit",
-						"BuildId": _this.bValue,
-						"ProjId": _this.projId,
-						"UserId": _this.UserId
-					})
+							"Comming": "revit",
+							"BuildId": _this.bValue,
+							"ProjId": _this.projId,
+							"UserId": _this.UserId
+						})
 						.then(function (res) {
 							_this.floors = res.data.FloorList;
 							_this.floors.splice(0, 0, {
@@ -346,12 +362,12 @@
 					};
 
 					axios.all([
-						axios.post(_this.baseUrl + "service/fm/queryRevit", postData),
-						axios.post(headerUrl, headerPostData)
-					])
+							axios.post(_this.baseUrl + "service/fm/queryRevit", postData),
+							axios.post(headerUrl, headerPostData)
+						])
 						.then(axios.spread(function (datas, header) {
 							_this.allDatas = datas.data;
-							_this.tabs = [];//清空tab
+							_this.tabs = []; //清空tab
 							//所有点位数据中族分类
 							datas.data.Family.forEach(function (data) {
 								_this.tabs.push({
@@ -378,6 +394,12 @@
 					axios.get(this.baseUrl + "service/dict/equipment_family")
 						.then(function (res) {
 							_this.allFamilyData = res.data.Content;
+
+							//增加通用族
+							_this.allFamilyData.push({
+								code: 'eq-gen',
+								'name': '基本族'
+							});
 						})
 						.catch(function (err) {
 							console.log(err);
@@ -476,7 +498,6 @@
 					this.isActive = !this.isActive
 				},
 				initSetting: function (datas, headersData) {
-
 					//整理数据
 
 					for (let index = 0; index < datas.length; index++) {
@@ -550,21 +571,41 @@
 						afterChange: function (changes, source) {
 							//当数据被编辑时
 							if (source == "edit") {
-								let row = changes[0][0];//当前被编辑的行数
+								let change = changes[0];
+								let row = change[0]; //当前被编辑的行数
+								let key = change[1];
+								let value = change[3];
 								let fmId = _this.currHot.getDataAtRowProp(row, 'FmId');
-								let rowData=_this.currHot.getDataAtRow(row);
+								//let rowData = _this.currHot.getDataAtRow(row);
+								let length = _this.needSaveData.length || 1;
 								//检测是否有重复数据，如果有重复数据，直接替换掉
-								for (let index = 0; index < _this.needSaveData.length; index++) {
+								for (let index = 0; index < length; index++) {
 									const element = _this.needSaveData[index];
-									if (element.FmId == fmId) {
+									if (element && element.FmId == fmId) {
 										//删除已存在的数据，防止多次添加同一条数据
-										_this.needSaveData.splice(index, 1);
+										//_this.needSaveData.splice(index, 1);
+										//特殊处理族信息
+										if (key == 'Family') {
+											let arr = value.split('-');
+											if (arr.length == 2) {
+												value = arr[1];
+											} else if (arr.length == 3) { //通用信息族
+												value = 'eq-gen';
+											}
+										}
+										element[key] = value;
 										break;
 									}
+									if (index == length - 1) {
+										let data = {
+											FmId: fmId
+										};
+										data[key] = value;
+										_this.needSaveData.push(
+											data
+										);
+									}
 								}
-								_this.needSaveData.push({
-									FmId: fmId, Data: rowData
-								});
 							}
 						}
 					};
@@ -591,6 +632,7 @@
 						"ProjId": this.projId,
 						"UserId": this.UserId
 					};
+
 					function getFmData(fmData) {
 						let Fm = {};
 						Fm.Checked = fmData.Checked;
@@ -599,15 +641,16 @@
 						Fm.FmName = fmData.FmName;
 						Fm.Infos = {};
 						for (let key in fmData) {
-							this.Infos[key] = fmData[key];
+							Fm.Infos[key] = fmData[key];
 						}
 						return Fm;
 					}
 					let savaDatas = [];
 					this.needSaveData.forEach(function (data) {
-						let fm = getFmData(data.Data);
+						let fm = getFmData(data);
 						postData.FmList.push(fm);
 					});
+					this.deleteUndefinedProperty(postData);
 					axios.post(this.baseUrl + 'service/fm/update', postData)
 						.then(function (res) {
 							console.xml(res.data);
@@ -641,11 +684,16 @@
 				test: function (data) {
 					console.dirxml(data);
 				},
-				getPointData: function () {
-					//默认加载全部
+				getPointData: function (beginDate, endDate) {
+					let now = moment().format('YYYY-MM-DD HH:mm:ss', )
+					beginDate = beginDate || now;
+					endDate = endDate || now;
+					//默认加载今天全部
 					var _this = this;
 					var postData = {
 						"Comming": "revit",
+						"BeginTime": beginDate,
+						"EndTime": endDate,
 						//								"BuildId": _this.bValue,
 						"ProjId": _this.projId,
 						//								"FloorId": _this.fValue,
@@ -661,10 +709,12 @@
 
 					axios.post(this.baseUrl + 'service/fm/point_group', postData)
 						.then(function (res) {
-							_this.PointList = res.data.PointList;
-							_this.pointCount = _this.PointList.length > 4 ? 4 : _this.PointList.length;
-							//加载默认数据
-							_this.initData();
+							if (res.data.PointList.length > 0) {
+								_this.PointList = res.data.PointList;
+								_this.pointCount = _this.PointList.length > 4 ? 4 : _this.PointList.length;
+								//加载默认数据
+								_this.initData();
+							}
 							console.dir(res.data.PointList);
 						})
 						.catch(function (err) {
@@ -676,7 +726,8 @@
 						return undefined;
 					else {
 						var reg = /\d{4}-\d{2}-\d{2}/;
-						return '  (' + reg.exec(this.customDate[0].toISOString())[0] + '~' + reg.exec(this.customDate[1].toISOString())[0] + ')';
+						return '  (' + reg.exec(this.customDate[0].toISOString())[0] + '~' + reg.exec(this.customDate[1].toISOString())[
+							0] + ')';
 					}
 				},
 				search: function (day) {
@@ -684,7 +735,7 @@
 					var endTime = new Date();
 					if (day) {
 						this.elTopBtn = day;
-						startTime.setDate(startDate.getDate() - day);
+						startTime.setDate(startTime.getDate() - day);
 					} else { //自定义时间
 						if (day == 0) {
 							this.elTopBtn = 0;
@@ -692,7 +743,7 @@
 							this.elTopBtn = 5;
 						}
 						dialogFormVisible = true;
-						startDate = this.customDate[0];
+						startTime = this.customDate[0];
 						endTime = this.customDate[1];
 					}
 					//this.getLogs(startTime, endTime);
@@ -709,12 +760,20 @@
 					return url;
 				},
 				deleteUndefinedProperty: function (data) {
-					for (let d in data) {
-						if (!data[d]) {
-							delete data[d];
+					if (data instanceof Object) {
+						for (let d in data) {
+							if (!data[d]) {
+								delete data[d];
+							} else if ((data[d] instanceof Array) || (data[d] instanceof Object)) {
+								this.deleteUndefinedProperty(data[d]);
+							}
+						}
+					} else if (data instanceof Array) {
+						for (let d of data) {
+							this.deleteUndefinedProperty(d);
 						}
 					}
-					return data;
+
 				}
 			}
 		});
