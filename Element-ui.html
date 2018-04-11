@@ -333,12 +333,16 @@
 				var codeRenderer = function(instance, td, row, col, prop, value, cellProperties) {
 				var currencyCode = value;
 				value=value+'sssss';
-				// while(td.firstChild) {
-				// 	td.removeChild(td.firstChild);
-				// }
-				// 	var textNode = document.createTextNode(value === null ? '' : value);
+				while(td.firstChild) {
+					td.removeChild(td.firstChild);
+				}
 
-				// 	td.appendChild(textNode);
+					var textNode ="<a href='www.baidu.com' >"+currencyCode+"百度</a>";
+					var flagElement = document.createElement('a');
+					flagElement.setAttribute('href','www.baidu.com');
+					flagElement.innerText=value;
+// td.innnerHtml=textNode;
+					td.appendChild(flagElement);
 				
 			};
 			var hotElement = document.querySelector('#hot');
@@ -358,12 +362,12 @@
 						data: 'currencyCode',
 						type: 'dropdown',
 						source:dataObject.map(function(e){return e.flag;}),
-						renderer: codeRenderer
+						// renderer: codeRenderer
 					},
 					{
 						data: 'currency',
 						
-//						renderer:codeRenderer
+						renderer:codeRenderer
 					},
 					{
 						data: 'level',

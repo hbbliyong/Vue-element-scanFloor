@@ -24,7 +24,7 @@
 		[class^="el-icon-fa"],
 		[class*=" el-icon-fa"] {
 			display: inline-block;
-			font: normal normal normal 14px/1 FontAwesome!important;
+			font: normal normal normal 14px/1 FontAwesome !important;
 			font-size: inherit;
 			text-rendering: auto;
 			-webkit-font-smoothing: antialiased;
@@ -45,7 +45,6 @@
 		}
 
 		li {
-			float: left;
 			padding: 0px 15px;
 			margin: 10px;
 			width: 230px;
@@ -75,19 +74,25 @@
 			height: 180px;
 		}
 
-		/*.el-row {
-				border: 1px solid black;
-			}*/
+		.showBorder {
+			background-color: darkgray;
+		}
 
 		.el-tab-pane {
 			margin: -13px;
+		}
+
+		.toggleControl {
+			width: 180px;
+			height: 35px;
+			background-color: #909399
 		}
 	</style>
 </head>
 
 <body>
 	<div id="app">
-		<el-row :gutter="10">
+		<el-row :gutter="10" style="margin-bottom: 20px">
 			<el-col :span="16">
 				<div style="height: 20px;padding-top: 5px; margin-left:20px;float: left;">
 					<span>建筑名称:</span>
@@ -117,10 +122,10 @@
 				<span>|</span>
 				<el-button @click="search(0)" :class=" elTopBtn == 0 ? 'button_active' : ''" type="text">今天</el-button>
 				<span>|</span>
-				<el-button @click="search()" :class=" elTopBtn == 5 ? 'button_active' : ''" type="text">自定义 {{showDate()}}</el-button>
+				<el-button @click="dialogFormVisible = true" :class=" elTopBtn == 5 ? 'button_active' : ''" type="text">自定义 {{showDate()}}</el-button>
 			</el-col>
 		</el-row>
-		<el-row v-if="isActive" style="margin-bottom:0px">
+		<el-row v-if="isActive">
 			<el-col :span="1">
 				<div class="arrowBackgroud">
 					<div style="margin-top: 80px;">
@@ -152,12 +157,12 @@
 				</div>
 			</el-col>
 		</el-row>
-		<el-row :gutter="10" style="margin-top: 0px;">
+		<el-row>
 			<el-col :span="4" :offset="10">
 				<!-- <el-button  icon='fa fa-angle-double-up fa-2x' @click="toggle">显示隐藏</el-button> -->
-				<div style="width: 200px;height: 25px;" @click="toggle">
-					<span>xxxx点位标签</span>
-					<i class="fa fa-angle-double-up"/>
+				<div @click="toggle" class="toggleControl">
+					<span style="margin: 5px 20px">xxxx点位标签</span>
+					<i class="fa fa-angle-double-up" style="margin-left: 20px;"></i>
 				</div>
 			</el-col>
 		</el-row>
@@ -182,9 +187,9 @@
 			</div>
 		</el-row>
 		<el-row>
-			<div class="showBorder">
-				<ul class="menu" v-for="(item,index) in 4">
-					<li :class="{'selected':index===clickIndex}" @click="selected(index)">
+			<div class="showBorder1">
+				<ul class="menu">
+					<li :class="{'selected':index===clickIndex}" @click="selected(index)" v-for="(item,index) in 4">
 						<div class="dianwei">
 							<h3 style="padding: -20px;margin: 5px;">{{item}}照片</h3>
 							<img :src="'img/'+(item+nameIndex)+'.jpg'" class="img" />
@@ -196,7 +201,7 @@
 
 		</el-row>
 		<el-dialog :visible.sync="showDianWei" width="375px">
-			<iframe id='pointDetail' src="dianwei-detail.html?pointId=curPointId" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe>
+			<iframe id='pointDetail' src="dianwei-detail.html?pointId=curPoint.Id" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe>
 		</el-dialog>
 		<el-dialog title="自定义扫楼时间段" :visible.sync="dialogFormVisible">
 			<el-form>
@@ -207,7 +212,7 @@
 			</el-form>
 			<div slot="footer" class="dialog-footer">
 				<el-button @click="dialogFormVisible = false">取 消</el-button>
-				<el-button type="primary" @click="dialogFormVisible = false">确 定</el-button>
+				<el-button type="primary" @click="dialogFormVisible = false;search();">确 定</el-button>
 			</div>
 		</el-dialog>
 	</div>
@@ -224,14 +229,14 @@
 				bValue: '',
 				floors: [],
 				fValue: '',
-				clickIndex: '',
+				clickIndex: 0,
 				nameIndex: 0,
-				pointCount: 4,
+				// pointCount: 0,
 				isActive: false,
 				allDatas: [],
 				tabId: '0',
 				PointList: [],
-				curPointId: '',
+				curPoint: {},
 				imgData: ['1', '2', '3', '4'],
 				tabs: [],
 				hotElements: [],
@@ -265,6 +270,13 @@
 				//						_this.initSetting(tabData.FmList, headData);
 				//					});
 				//this.initSetting();
+			},
+			computed: {
+				//显示的点位标签个数
+				pointCount: function () {
+					let count = this.PointList.length
+					return count > 4 ? 4 : count;
+				}
 			},
 			methods: {
 				getBuilts: function () {
@@ -310,6 +322,7 @@
 				},
 				//默认字段
 				getDefaultColumnSetting: function () {
+					let _this = this;
 					var flagRenderer = function (instance, td, row, col, prop, value, cellProperties) {
 						value = value == 0 ? "未完成修订" : "已完成修订";
 						while (td.firstChild) {
@@ -319,17 +332,32 @@
 
 						td.appendChild(textNode);
 					};
+					var pointRenderer = function (instance, td, row, col, prop, value, cellProperties) {
+
+						while (td.firstChild) {
+							td.removeChild(td.firstChild);
+						}
+						var flagElement = document.createElement('a');
+						flagElement.setAttribute('href', '#');
+						flagElement.innerText = _this.curPoint.Name;
+						flagElement.addEventListener('click', function () {
+							_this.showPintDetail(_this.curPoint.Id);
+						});
+
+						td.appendChild(flagElement);
+					};
 					return [{
 						data: 'Checked',
 						//								type: 'text',
-						width: 50,
+						//width: 80,
 						//renderer: flagRenderer
 						type: 'checkbox',
 						checkedTemplate: '1',
 						uncheckedTemplate: '0'
 					}, {
 						data: 'PointName',
-						type: 'text'
+						type: 'text',
+						renderer:pointRenderer
 					}, {
 						data: 'Family',
 
@@ -348,7 +376,7 @@
 						"BuildId": this.bValue,
 						"Comming": "revit",
 						"FloorId": this.fValue,
-						"PointId": this.curPointId,
+						"PointId": this.curPoint.Id,
 						"ProjId": this.projId,
 						"UserId": this.UserId
 					};
@@ -472,8 +500,8 @@
 				},
 				selected: function (index) {
 					this.clickIndex = index;
-					this.curPointId = (this.PointList[index + this.nameIndex - 1] || {}).Id;
-					console.log(this.curPointId);
+					this.curPoint = (this.PointList[index + this.nameIndex - 1] || {});
+					console.log(this.curPoint.Id);
 					//切换点位信息
 					this.initData();
 				},
@@ -502,6 +530,7 @@
 
 					for (let index = 0; index < datas.length; index++) {
 						const element = datas[index];
+						//处理族
 						for (const f of this.allFamilyData) {
 							if (f.code == element.Family) {
 								element.Family = f.name + '-' + f.code;
@@ -685,9 +714,9 @@
 					console.dirxml(data);
 				},
 				getPointData: function (beginDate, endDate) {
-					let now = moment().format('YYYY-MM-DD HH:mm:ss', )
-					beginDate = beginDate || now;
-					endDate = endDate || now;
+					//let now = moment().format('YYYY-MM-DD HH:mm:ss')
+					beginDate = moment(beginDate || new Date()).format('YYYY-MM-DD HH:mm:ss');
+					endDate = moment(endDate || new Date()).format('YYYY-MM-DD HH:mm:ss');
 					//默认加载今天全部
 					var _this = this;
 					var postData = {
@@ -711,9 +740,14 @@
 						.then(function (res) {
 							if (res.data.PointList.length > 0) {
 								_this.PointList = res.data.PointList;
-								_this.pointCount = _this.PointList.length > 4 ? 4 : _this.PointList.length;
+								_this.curPoint=_this.PointList[0];
+								//_this.pointCount = _this.PointList.length > 4 ? 4 : _this.PointList.length;
 								//加载默认数据
 								_this.initData();
+							} else { //没有数据清空Tab
+								_this.tabs = [];
+								_this.PointList = [];
+								//_this.pointCount =0;
 							}
 							console.dir(res.data.PointList);
 						})
@@ -742,11 +776,11 @@
 						} else {
 							this.elTopBtn = 5;
 						}
-						dialogFormVisible = true;
+
 						startTime = this.customDate[0];
 						endTime = this.customDate[1];
 					}
-					//this.getLogs(startTime, endTime);
+					this.getPointData(startTime, endTime);
 				},
 				PictureServerUrl: function (key, width, height) {
 					if (!key) {
