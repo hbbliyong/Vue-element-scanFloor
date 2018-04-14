@@ -75,7 +75,7 @@
 		}
 
 		.showBorder {
-			background-color: darkgray;
+			background-color: #EEEEEE;
 		}
 
 		.el-tab-pane {
@@ -83,16 +83,16 @@
 		}
 
 		.toggleControl {
-			width: 180px;
+			width: 190px;
 			height: 35px;
-			background-color: #909399
+			background-color: #DDDDDD
 		}
 	</style>
 </head>
 
 <body>
 	<div id="app">
-		<el-row :gutter="10" style="margin-bottom: 20px">
+		<el-row :gutter="10" style="margin-bottom: 20px;background-color: #EEEEEE">
 			<el-col :span="16">
 				<div style="height: 20px;padding-top: 5px; margin-left:20px;float: left;">
 					<span>建筑名称:</span>
@@ -125,7 +125,7 @@
 				<el-button @click="dialogFormVisible = true" :class=" elTopBtn == 5 ? 'button_active' : ''" type="text">自定义 {{showDate()}}</el-button>
 			</el-col>
 		</el-row>
-		<el-row v-if="isActive">
+		<el-row v-if="isActive" style="background-color: #EEEEEE">
 			<el-col :span="1">
 				<div class="arrowBackgroud">
 					<div style="margin-top: 80px;">
@@ -161,17 +161,17 @@
 			<el-col :span="4" :offset="10">
 				<!-- <el-button  icon='fa fa-angle-double-up fa-2x' @click="toggle">显示隐藏</el-button> -->
 				<div @click="toggle" class="toggleControl">
-					<span style="margin: 5px 20px">xxxx点位标签</span>
-					<i class="fa fa-angle-double-up" style="margin-left: 20px;"></i>
+					<span style="margin: 5px 20px">{{(curPoint.Name||"点位标签")}}</span>
+					<i class="fa fa-angle-double-up" style="margin-left: 15px;"></i>
 				</div>
 			</el-col>
 		</el-row>
 		<!--保存操作-->
 		<el-row>
 			<el-col :span="8" :offset="1">
-				<el-button type="text">全部</el-button>
+				<el-button :class="{'button_active':checkedEq==0}" type="text" @click="checkedEq=0;initData()">全部</el-button>
 				<span> |</span>
-				<el-button type="text">未完成修订</el-button>
+				<el-button type="text" :class="{'button_active':checkedEq==1}" @click="checkedEq=1;initData()">未完成修订</el-button>
 			</el-col>
 			<el-col :span="4" :offset="11">
 				<el-button type="text" icon="el-icon-tickets" @click="saveData">保存所有修改</el-button>
@@ -247,6 +247,7 @@
 				dialogFormVisible: false,
 				showData: [],
 				elTopBtn: 0,
+				checkedEq:1,
 				customDate: [],
 				formLabelWidth: '120px',
 			},
@@ -274,7 +275,7 @@
 			computed: {
 				//显示的点位标签个数
 				pointCount: function () {
-					let count = this.PointList.length
+					let count = this.PointList.length;
 					return count > 4 ? 4 : count;
 				}
 			},
@@ -381,6 +382,11 @@
 						"UserId": this.UserId
 					};
 					this.deleteUndefinedProperty(postData);
+
+					if(_this.checkedEq){
+						postData.Checked=0;
+					}
+					
 					var headerUrl = 'http://192.168.30.96:8080/saas-manage/app/restTemplateService/queryObjectPropertyMapping';
 					var headerPostData = {
 						"user_id": this.UserId,
@@ -396,6 +402,7 @@
 						.then(axios.spread(function (datas, header) {
 							_this.allDatas = datas.data;
 							_this.tabs = []; //清空tab
+							_this.hotElements=[];
 							//所有点位数据中族分类
 							datas.data.Family.forEach(function (data) {
 								_this.tabs.push({
