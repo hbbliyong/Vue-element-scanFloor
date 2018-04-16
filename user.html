@@ -3,11 +3,11 @@
 
 <head>
 	<meta charset="UTF-8">
-	<title></title>
+	<title>用户管理</title>
 	<!-- 引入样式 -->
 	<link rel="stylesheet" href="https://unpkg.com/vue-easytable/umd/css/index.css">
 	<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
-	<script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script>
+
 
 	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 	<!-- 引入Vue -->
@@ -17,7 +17,7 @@
 
 	<!-- 引入组件库 -->
 	<script src="https://unpkg.com/element-ui/lib/index.js"></script>
-
+	<script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script>
 	<style>
 		.cell-edit-color {
 			color: #2db7f5;
@@ -85,7 +85,7 @@
 			//				console.dirxml(data)
 			//				console.log(key)
 			for (var prop in data) {
-				if (data[prop]&&data[prop].indexOf(key) > -1) {
+				if (data[prop] && data[prop].indexOf(key) > -1) {
 					return true;
 				}
 			}
@@ -222,7 +222,7 @@
 					let _this = this;
 					var addUsers = [];
 					var updateUser = [];
-					for (let i = 0; i < this.tableData.length; i++) {
+					for (var i = 0; i < this.tableData.length; i++) {
 						if (!this.tableData[i].UserId) {
 							addUsers.push(this.tableData[i]);
 						} else
@@ -288,16 +288,33 @@
 					console.log('select-change', selection);
 				},
 				keyChange: function () {
-					this.tableData = this.showData.filter(item => searchAllValue(item, this.keyword));
+					let _this = this;
+					if (this.keyword) {
+						this.tableData = this.showData.filter(
+							function (item) {
+								return searchAllValue(item, _this.keyword)
+							});
+					} else {
+						this.tableData = this.showData;
+					}
 				},
 				/***grid操作***/
 				// 单元格编辑回调
 				cellEditDone: function (newValue, oldValue, rowIndex, rowData, field) {
+					//用户不能为空
+					if(field=='UserName'&&!newValue){
+						this.warning('用户名不能为空');
+					}
 					//电话号码不能相同
 					if (field == 'Phone') {
-						for (let d of this.tableData) {
+						var mobile = /^1[3|5|8]\d{9}$/;
+						if(!mobile.test(newValue)){
+							this.warning('电话号码输入有误！')
+						}
+						for (let i = 0; i < this.tableData.length; i++) {
+							let d = this.tableData[i];
 							if (d.Phone == newValue) {
-								this.warning('电话号码不能相同')
+								this.warning('电话号码不能相同');
 
 								return;
 							}
