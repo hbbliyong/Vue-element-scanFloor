@@ -10,18 +10,18 @@
 	<!-- <script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script> -->
 	<!-- 先引入 Vue -->
 	<script src="https://unpkg.com/vue/dist/vue.js"></script>
-	<!-- 引入组件库 -->
+	<!-- 引入组件库 --> 
 	<script src="https://unpkg.com/element-ui/lib/index.js"></script>
 
 	<link rel="stylesheet" type="text/css" href="bower_components/handsontable/dist/handsontable.full.min.css">
 	<script src="bower_components/handsontable/dist//handsontable.full.js"></script>
-	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+	<script src="bower_components/axios/dist/axios.js"></script>
 	<script src="https://cdn.bootcss.com/underscore.js/1.8.3/underscore-min.js"></script>
 	<script src="https://cdn.bootcss.com/qs/6.5.1/qs.js"></script>
 	<script src="bower_components/moment/moment.js"></script>
 	<script src="js/tools.js"></script>
 	<script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script>
-	<style type="text/css">
+	<style type="text/css"> 
 		[class^="el-icon-fa"],
 		[class*=" el-icon-fa"] {
 			display: inline-block;
@@ -53,6 +53,14 @@
 			display: inline-block;
 			border: 1px solid black;
 			box-sizing: border-box;
+			position: relative;
+		}
+
+		.dianwei>a {
+			position: absolute;
+			bottom: 14%;
+			left: 60%;
+			width: 80px;
 		}
 
 		.el-col button.button_active {
@@ -61,9 +69,9 @@
 		}
 
 		.img {
-			margin-left: 10px;
-			width: 180px;
-			height: 120px;
+			margin-left: 5px;
+			width: 190px;
+			height: 130px;
 		}
 
 		.selected {
@@ -141,9 +149,10 @@
 							<div class="dianwei">
 								<h3 style="padding: -20px;margin: 5px;">{{((PointList[item+nameIndex-1]||{})).Name}}</h3>
 								<span style="margin: 10px 0px;">附近资产:{{((PointList[item+nameIndex-1]||{})).Total}}个({{((PointList[item+nameIndex-1]||{})).Nocheck}}个未修订)</span>
+								<img :src="PictureServerUrl((PointList[item+nameIndex-1]||{}).Image)" class="img" />
 								<a href="#" @click='showPintDetail((PointList[item+nameIndex-1]||{}).Id)'>
 									<!--<img :src="'img/'+(parseInt(item)+nameIndex)+'.jpg'" class="img" />-->
-									<img :src="PictureServerUrl((PointList[item+nameIndex-1]||{}).Image)" class="img" />
+									查看详情
 								</a>
 							</div>
 						</li>
@@ -190,17 +199,19 @@
 		<el-row>
 			<div class="showBorder1">
 				<ul class="menu">
-					<li :class="{'selected':index===clickIndex}" @click="selected(index)" v-for="(item,index) in 4">
+					<li :class="{'selected':index===fmImageIndex}" @click="selectedImage(index)" v-for="(item,index) in imageCount">
 						<div class="dianwei">
-							<h3 style="padding: -20px;margin: 5px;">{{item}}照片</h3>
-							<img :src="'img/'+(item+nameIndex)+'.jpg'" class="img" />
+							<span style="padding: -20px;margin: 5px;">{{(FmImages[item+fmImageNameIndex-1]||{}).Name}}</span>
+							<!-- <img :src="'img/'+(item+fmImageNameIndex)+'.jpg'" class="img" /> -->
+							<img :src="PictureServerUrl((FmImages[item+fmImageNameIndex-1]||{}).Key)" class="img" />
 						</div>
 					</li>
 				</ul>
 			</div>
 		</el-row>
-		<el-dialog :visible.sync="showDianWei" width="375px">
-			<iframe id='pointDetail' src="dianwei-detail.html?pointId=curPoint.Id" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe>
+		<el-dialog :visible.sync="showDianWei" width="380px">
+				<!-- <iframe id='pointDetail' src="dianwei-detail.html?pointId=curPoint.Id&projId=projId&userId=UserId" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe> -->
+				<iframe name="details" id='pointDetail' src="dianwei-detail.html" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe>
 		</el-dialog>
 		<el-dialog title="自定义扫楼时间段" :visible.sync="dialogFormVisible">
 			<el-form>
@@ -251,9 +262,14 @@
 				formLabelWidth: '120px',
 				beginDate: '',
 				endDate: '',
+				FmImages: [],
+				fmImageIndex: 0,
+				fmImageNameIndex: 0,
 			},
 			created: function () {
 				//TODO:获取请求参数中的projId和UserId
+				this.projId = GetQueryString('projId') || 'Pj1101080001';
+				this.UserId = GetQueryString('userId') || 'revit';
 				this.getPointData();
 				//获取所有族信息
 				this.getAllFamily();
@@ -277,6 +293,10 @@
 				//显示的点位标签个数
 				pointCount: function () {
 					let count = this.PointList.length;
+					return count > 4 ? 4 : count;
+				},
+				imageCount: function () {
+					let count = this.FmImages.length;
 					return count > 4 ? 4 : count;
 				}
 			},
@@ -383,7 +403,7 @@
 						"BuildId": this.bValue,
 						"Comming": "revit",
 						"FloorId": this.fValue,
-						"PointId": this.curPoint.Id || -1,
+						"PointId": this.curPoint.Id || "",
 						"ProjId": this.projId,
 						"UserId": this.UserId
 					};
@@ -406,7 +426,7 @@
 							axios.post(headerUrl, headerPostData)
 						])
 						.then(axios.spread(function (datas, header) {
-							_this.allDatas = datas.data;
+							_this.allDatas = datas.data.Family;
 							_this.tabs = []; //清空tab
 							_this.hotElements = [];
 							//所有点位数据中族分类
@@ -471,9 +491,14 @@
 					console.log(this.fValue);
 				},
 				showPintDetail: function (pointId) {
-					this.showDianWei = true;
-					var src = 'dianwei-detail.html?pointId=' + pointId;
-					document.getElementById('pointDetail').src = src;
+					if (pointId) {
+						this.showDianWei = true;
+						//var src = 'dianwei-detail.html?pointId=' + pointId + '&projId=' + this.projId + '&userId=' + this.UserId;
+						let iframe = document.getElementById('pointDetail');
+						if (iframe)
+							//iframe.src = src;
+							details.window.app.getPoint(pointId);
+					}
 				},
 				tabClick: function () {
 					var tabData = this.tabs[this.tabId]
@@ -512,11 +537,14 @@
 						})
 				},
 				selected: function (index) {
-					this.clickIndex = index;
+					this.fmImageIndex = index;
 					this.curPoint = (this.PointList[index + this.nameIndex - 1] || {});
 					console.log(this.curPoint.Id);
-					//切换点位信息
-					this.initData();
+				},
+				selectedImage: function (index) {
+					this.fmImageIndex = index;
+					//this.curPoint = (this.PointList[index + this.nameIndex - 1] || {});
+					//console.log(this.curPoint.Id);
 				},
 				indexAdd: function () {
 					if (this.clickIndex < 3)
@@ -533,6 +561,22 @@
 					else {
 						if (this.nameIndex > 0)
 							this.nameIndex -= 1;
+					}
+				},
+				imageIndexAdd: function () {
+					if (this.fmImageIndex < 3)
+						this.fmImageIndex += 1;
+					else {
+						if (this.fmImageNameIndex < this.FmImages.length)
+							this.fmImageNameIndex += 1;
+					}
+				},
+				imageIndexMul: function () {
+					if (this.fmImageIndex > 0)
+						this.fmImageIndex -= 1;
+					else {
+						if (this.fmImageNameIndex > 0)
+							this.fmImageNameIndex -= 1;
 					}
 				},
 				toggle: function () {
@@ -670,6 +714,19 @@
 									}
 								}
 							}
+						},
+						afterSelection: function (r, c, r2, c2, preventScrolling, selectionLayerLevel) {
+							// setting if prevent scrolling after selection
+							let familyId = this.getDataAtRowProp(r, "Family");
+							let familyData = (_this.allDatas.filter(function (d) {
+								return (d.Name + '-' + d.Code) == familyId;
+							})[0] || {}).FmList;
+							let fmId = this.getDataAtRowProp(r, "FmId");
+							let data = familyData.filter(function (d) {
+								return d.FmId == fmId;
+							});
+							_this.FmImages = data[0].ImageList;
+							preventScrolling.value = true;
 						}
 					};
 					var hot = new Handsontable(hotElement, hotSettings);
@@ -680,6 +737,7 @@
 				},
 				//保存所有修改的数据
 				saveData: function () {
+					let _this = this;
 					let postData = {
 						"Comming": "revit",
 						"FmList": [
@@ -703,8 +761,9 @@
 						Fm.FmId = fmData.FmId;
 						Fm.FmName = fmData.FmName;
 						Fm.Infos = {};
+						let ingore = ['FmId', 'Checked', 'Family', 'FmName'];
 						for (let key in fmData) {
-							if (key != 'FmId') {
+							if (ingore.indexOf(key) == -1) {
 								Fm.Infos[key] = fmData[key];
 							}
 						}
@@ -716,8 +775,12 @@
 						postData.FmList.push(fm);
 					});
 					this.deleteUndefinedProperty(postData);
+					console.log(JSON.stringify(postData));
 					axios.post(this.baseUrl + 'service/fm/update', postData)
 						.then(function (res) {
+							if (res.data.Result == 'success') {
+								_this.needSaveData = []; //保存成功，清空需要保存的数据
+							}
 							console.xml(res.data);
 						})
 						.catch(function (err) {
@@ -748,19 +811,16 @@
 				test: function (data) {
 					console.dirxml(data);
 				},
-				getPointData: function (beginDate, endDate) {
+				getPointData: function () {
 					//let now = moment().format('YYYY-MM-DD HH:mm:ss')
-					beginDate = moment(beginDate || new Date()).format('YYYY-MM-DD HH:mm:ss');
-					endDate = moment(endDate || new Date()).format('YYYY-MM-DD HH:mm:ss');
 
-					this.beginDate = beginDate;
-					this.endDate = endDate;
+
 					//默认加载今天全部
 					var _this = this;
 					var postData = {
 						"Comming": "revit",
-						"BeginTime": beginDate,
-						"EndTime": endDate,
+						"BeginTime": this.beginDate,
+						"EndTime": this.endDate,
 						//								"BuildId": _this.bValue,
 						"ProjId": _this.projId,
 						"FloorId": _this.fValue,
@@ -819,7 +879,10 @@
 						startTime = this.customDate[0];
 						endTime = this.customDate[1];
 					}
-					this.getPointData(startTime, endTime);
+					this.beginDate = moment(startTime || new Date()).format('YYYY-MM-DD HH:mm:ss');
+					this.endDate = moment(endTime || new Date()).format('YYYY-MM-DD HH:mm:ss');;
+
+					this.getPointData();
 				},
 				PictureServerUrl: function (key, width, height) {
 					if (!key) {

@@ -1,0 +1,26 @@
+{
+  "name": "ScanData",
+  "homepage": "https://github.com/hbbliyong/Vue-element-scanFloor",
+  "authors": [
+    "hbbliyong <hbbliyong@163.com>"
+  ],
+  "description": "deal the scan data",
+  "main": "",
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "axios": "^0.18.0",
+    "element-ui": "^2.2.0",
+    "juqery": "^3.3.1",
+    "handsontable": "^2.0.0",
+    "qrcode.js": "qrcode#^1.0.2",
+    "polyfill": "*"
+  }
+}

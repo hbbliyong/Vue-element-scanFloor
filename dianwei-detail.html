@@ -1,214 +1,237 @@
 <!DOCTYPE html>
 <html>
 
-	<head>
-		<meta charset="UTF-8">
-		<title></title>
-		<!-- 引入样式 -->
-		<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
-		<!-- 先引入 Vue -->
-		<script src="https://unpkg.com/vue/dist/vue.js"></script>
-		<script src="https://cdn.bootcss.com/element-ui/2.2.0/index.js"></script>
-		<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-		<script src="js/qrcodejs/qrcode.js"></script>
-		<script src="js/tools.js"></script>
-		<style>
-			.menu {
-				padding-left: 5px;
-			}
-			
-			.menu,
-			.menu li {
-				list-style: none;
-				margin: 0px;
-			}
-			
-			li {
-				float: left;
-				padding: 10px;
-				margin: 10px;
-				display: inline-block;
-				//border: 1px solid black;
-			}
-			
-			.selected {
-				border: 1px solid blue;
-			}
-			
-			.el-row {
-				margin-bottom: 0px;
-				border: 1px solid #d9d9d9;
-				//background: #ffeeff;
-				&:last-child {
-					margin-bottom: 0;
-				}
-			}
-			
-			h3 {
-				margin: 10px 0px 10px 5px;
-				padding: 2px;
-			}
-			
-			.erweima {
-				float: left;
-				width: 90px;
-				height: 120px;
-				/*background-color: red;*/
-				text-align: center;
-			}
-			
-			#qrcode {
-				width: 80px;
-				height: 80px;
-				/*top:50px;
-				bottom: 0;*/
-				left: 6;
-				/*right: 0;*/
-				margin: auto;
-				position: relative;
-				top: 25%;
-			}
-			
-			.el-input__inner {
-				width: 220px;
-				border-top-width: 0px;
-				border-left-width: 0px;
-				border-right-width: 0px;
-				border-bottom-width: 1px;
-				/*outline: medium;*/
-			}
-			
-			table {
-				width: 100%;
-			}
-			
-			td {
-				width: 50%;
-				border: 1px solid #d9d9d9;
-			}
-			
-			li>div {
-				width: 150px;
-				height: 150px;
-			}
-			
-			li>div>img {
-				width: 150px;
-				height: 150px;
-			}
-		</style>
-	</head>
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<!-- 引入样式 -->
+	<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+	<!-- 先引入 Vue -->
+	<script src="https://unpkg.com/vue/dist/vue.js"></script>
+	<script src="https://cdn.bootcss.com/element-ui/2.2.0/index.js"></script>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+	<script src="js/qrcodejs/qrcode.js"></script>
+	<script src="js/tools.js"></script>
+	<script src="bower_components/juqery/dist/jquery.js"></script>
+	<style>
+		.menu {
+			padding-left: 5px;
+		}
 
-	<body>
-		<div id="app" style="width: 350px;">
-			<el-row>
-				<div class="erweima">
-					<!--<img src="img/1.jpg" />-->
-					<div id="qrcode"></div>
-				</div>
-				<div style="float: left;width: 210px; margin-left: 10px;">
-					<h3>点位标签现场位置</h3>
-					<el-input placeholder="点位标签的名称" v-model='Point.PointName' @keyup.enter.native='saveChange()' @blur='saveChange()'></el-input>
-					<el-input placeholder="点位标签的本地编码" v-model='Point.PointLocalId' @keyup.enter.native='saveChange()' @blur='saveChange()'></el-input>
-				</div>
-			</el-row>
-			<el-row>
-				<h3>编码及关系</h3></el-row>
-			<el-row>
-				<table cellpadding="5" cellspacing="0">
-					<tr>
-						<td>点位标签ID</td>
-						<td>{{Point.PointId}}</td>
-					</tr>
-					<tr>
-						<td>模型ID</td>
-						<td>mx00000000000000</td>
-					</tr>
-				</table>
-			</el-row>
-			<el-row>
-				<h3>现场照片</h3></el-row>
-			<el-row>
-				<div>
-					<ul class="menu" v-for="(item,index) in 4">
-						<li :class="{'selected':index===clickIndex}" @click="selected(index)">
-							<div>
-								<img :src="'img/'+(item+nameIndex)+'.jpg'" />
-								<a href="#"></a>
-							</div>
-						</li>
-					</ul>
-				</div>
-			</el-row>
-		</div>
-		<script>
-			new Vue({
-				el: '#app',
-				data: {
-					Point: {
-						PointId: '扫楼uuid',
-						PointName: '',
-						PointLocalId: '',
-					},
-					ProjId: '',
-					UserId: '',
-					baseUrl: 'http://172.16.0.189:8080/ScanBuilding/',
-					clickIndex: '',
-					nameIndex: 0
+		.menu,
+		.menu li {
+			list-style: none;
+			margin: 0px;
+		}
+
+		li {
+			float: left;
+			padding: 10px;
+			margin: 10px;
+			display: inline-block; //border: 1px solid black;
+		}
+
+		.selected {
+			border: 1px solid blue;
+		}
+
+		.el-row {
+			margin-bottom: 0px;
+			border: 1px solid #d9d9d9; //background: #ffeeff;
+			&:last-child {
+				margin-bottom: 0;
+			}
+		}
+
+		h3 {
+			margin: 10px 0px 10px 5px;
+			padding: 2px;
+		}
+
+		.erweima {
+			float: left;
+			width: 90px;
+			height: 120px;
+			/*background-color: red;*/
+			text-align: center;
+		}
+
+		#qrcode {
+			width: 80px;
+			height: 80px;
+			/*top:50px;
+				bottom: 0;*/
+			left: 6;
+			/*right: 0;*/
+			margin: auto;
+			position: relative;
+			top: 25%;
+		}
+
+		.el-input__inner {
+			width: 220px;
+			border-top-width: 0px;
+			border-left-width: 0px;
+			border-right-width: 0px;
+			border-bottom-width: 1px;
+			/*outline: medium;*/
+		}
+
+		table {
+			width: 100%;
+		}
+
+		td {
+			width: 50%;
+			border: 1px solid #d9d9d9;
+		}
+
+		li>div {
+			width: 150px;
+			height: 150px;
+		}
+
+		li>div>img {
+			width: 150px;
+			height: 150px;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="app" style="width: 350px;">
+		<el-row>
+			<div class="erweima">
+				<!--<img src="img/1.jpg" />-->
+				<div id="qrcode"></div>
+			</div>
+			<div style="float: left;width: 210px; margin-left: 10px;">
+				<h3>点位标签现场位置</h3>
+				<el-input placeholder="点位标签的名称" v-model='Point.PointName' @keyup.enter.native='saveChange()' @blur='saveChange()'></el-input>
+				<el-input placeholder="点位标签的本地编码" v-model='Point.PointLocalId' @keyup.enter.native='saveChange()' @blur='saveChange()'></el-input>
+			</div>
+		</el-row>
+		<el-row>
+			<h3>编码及关系</h3>
+		</el-row>
+		<el-row>
+			<table cellpadding="5" cellspacing="0">
+				<tr>
+					<td>点位标签ID</td>
+					<td>{{Point.PointId}}</td>
+				</tr>
+				<tr>
+					<td>模型ID</td>
+					<td>mx00000000000000</td>
+				</tr>
+			</table>
+		</el-row>
+		<el-row>
+			<h3>现场照片</h3>
+		</el-row>
+		<el-row>
+			<div>
+				<ul class="menu" v-for="(item,index) in 4">
+					<li :class="{'selected':index===clickIndex}" @click="selected(index)">
+						<div>
+							<img :src="'img/'+(item+nameIndex)+'.jpg'" />
+							<a href="#"></a>
+						</div>
+					</li>
+				</ul>
+			</div>
+		</el-row>
+	</div>
+	<script>
+		// $(document).ready(function(){
+		// 	alert('XXX')
+		// })
+	var app=	new Vue({
+			el: '#app',
+			data: {
+				Point: {
+					PointId: '扫楼uuid',
+					PointName: '',
+					PointLocalId: '',
 				},
-				mounted: function() {
-					var pointId=GetQueryString('pointId')||'97586356531757057';
-					this.getPoint(pointId);
-				},
-				methods: {
-					getPoint: function(ponitId) {
-						var _this = this;
-						var data = {
-							"PointId": ponitId
-						};
-						axios.post(this.baseUrl + "service/point/query", data)
-							.then(function(res) {
-								_this.Point = res.data.PointList[0] || {};
-								_this.qrcode(_this.Point);
-							})
-							.catch(function(err) {
-								console.log(err);
-							});
-					},
-					saveChange: function() {
-						var _this = this;
-						var data = {
-							"Comming": "revit",
-							"PointList": [
-							_this.Point
-							],
-							"ProjId": _this.ProjId,
-							"UserId": _this.UserId
-						};
-						axios.post(this.baseUrl + "service/point/update", data)
-							.then(function(res) {
-								//_this.allFamilyData = res.data.Content;
-							})
-							.catch(function(err) {
-								console.log(err);
-							});
-					},
-					selected: function(index) {
-						this.clickIndex = index;
-					},
-					qrcode: function(point) {
-						var qrcode = new QRCode(document.getElementById("qrcode"), {
-							text: point.PointId,
-							width: 80,
-							height: 80,
-							colorDark: "#000000",
-							colorLight: "#ffffff",
-							correctLevel: QRCode.CorrectLevel.H
+				ProjId: '',
+				UserId: '',
+				baseUrl: 'http://172.16.0.189:8080/ScanBuilding/',
+				clickIndex: '',
+				nameIndex: 0
+			},
+			created:function(){
+			
+			},
+			mounted: function () {
+		
+				// this.ProjId = GetQueryString('projId') || 'Pj1101080001';
+				// this.UserId = GetQueryString('userId') || 'revit';
+				// var pointId = GetQueryString('pointId') 
+				let parentData=parent.window.app.$data;
+				this.ProjId = parentData.projId || 'Pj1101080001';
+				this.UserId = parentData.UserId|| 'revit';
+				let pointId = parentData.curPoint.Id;
+				this.getPoint(pointId);
+			},
+			activated:function(){
+			},
+			methods: {
+				getPoint: function (ponitId) {
+					var _this = this;
+					var data = {
+						"Comming": "revit",
+						"PointId": ponitId,
+						"ProjId": this.ProjId,
+						"UserId": this.UserId
+					};
+					axios.post(this.baseUrl + "service/point/query", data)
+						.then(function (res) {
+							_this.Point = res.data.PointList[0] || {};
+							_this.qrcode(_this.Point);
+						})
+						.catch(function (err) {
+							console.log(err);
 						});
+				},
+				saveChange: function () {
+					var _this = this;
+					var data = {
+						"Comming": "revit",
+						"PointList": [
+							_this.Point
+						],
+						"ProjId": _this.ProjId,
+						"UserId": _this.UserId
+					};
+					axios.post(this.baseUrl + "service/point/update", data)
+						.then(function (res) {
+							//_this.allFamilyData = res.data.Content;
+						})
+						.catch(function (err) {
+							console.log(err);
+						});
+				},
+				selected: function (index) {
+					this.clickIndex = index;
+				},
+				qrcode: function (point) {
+					var ele=document.getElementById("qrcode");
+					while(ele.firstChild){
+						ele.removeChild(ele.firstChild);
 					}
+					var qrcode = new QRCode(ele, {
+						text: point.PointId,
+						width: 80,
+						height: 80,
+						colorDark: "#000000",
+						colorLight: "#ffffff",
+						correctLevel: QRCode.CorrectLevel.H
+					});
 				}
-			})
-		</script>
-	</body>
+			}
+		})
+	</script>
+</body>
 
 </html>
