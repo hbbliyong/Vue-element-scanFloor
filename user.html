@@ -222,14 +222,21 @@
 					let _this = this;
 					var addUsers = [];
 					var updateUser = [];
+
 					for (var i = 0; i < this.tableData.length; i++) {
+						//检测所有电话号码是否正确
+						var mobile = /^1[3|5|8]\d{9}$/;
+						if (!mobile.test(this.tableData[i].Phone)) {
+							this.warning('电话号码输入有误！,请修改后保存！');
+							return;
+						}
 						if (!this.tableData[i].UserId) {
 							addUsers.push(this.tableData[i]);
 						} else
 						if (this.tableData[i].flag == 2) {
 							updateUser.push(this.tableData[i]);
+							this.tableData[i].flag = -1;
 						}
-
 					}
 
 					//创建扫楼用户
@@ -251,8 +258,8 @@
 						createUser.User.UserName = cUser.UserName;
 						axios.post(this.baseUrl + "service/user/create", createUser)
 							.then(function (res) {
+								
 								console.dirxml(res.data);
-
 							})
 							.catch(function (err) {
 								console.log(err);
@@ -273,6 +280,8 @@
 						.catch(function (err) {
 							console.log(err);
 						})
+					//保存成功，重新加载数据
+						_this.getUsers();
 					_this.successTips('数据保存成功');
 				},
 				selectChange: function (selection, rowData) {
@@ -302,20 +311,20 @@
 				// 单元格编辑回调
 				cellEditDone: function (newValue, oldValue, rowIndex, rowData, field) {
 					//用户不能为空
-					if(field=='UserName'&&!newValue){
+					if (field == 'UserName' && !newValue) {
 						this.warning('用户名不能为空');
 					}
 					//电话号码不能相同
 					if (field == 'Phone') {
 						var mobile = /^1[3|5|8]\d{9}$/;
-						if(!mobile.test(newValue)){
-							this.warning('电话号码输入有误！')
+						if (!mobile.test(newValue)) {
+							this.warning('电话号码输入有误！');
+							return;
 						}
 						for (let i = 0; i < this.tableData.length; i++) {
 							let d = this.tableData[i];
-							if (d.Phone == newValue) {
+							if (d.Phone == newValue && i != rowIndex) {
 								this.warning('电话号码不能相同');
-
 								return;
 							}
 						}

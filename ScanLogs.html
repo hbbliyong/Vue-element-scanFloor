@@ -25,7 +25,7 @@
 </head>
 
 <body>
-	<div id="app" style="width: 1000px;">
+	<div id="app" style="width: 1200px;">
 		<el-row :gutter="20" style="margin: 15px;">
 			<el-col :span="9">
 				<el-input v-model="keyword" @input="keyChange" placeholder="请输入操作人、动作、对象Id、备注等关键字进行搜索"></el-input>
@@ -50,13 +50,13 @@
 		<el-row>
 			<div>
 				<el-table :data="tableData" stripe border style="width: 100%">
-					<el-table-column prop="CreateTime" label="日期" width="180">
+					<el-table-column prop="CreateTime" label="日期" width="160">
 					</el-table-column>
-					<el-table-column prop="Phone" label="操作人(手机号)" width="180">
+					<el-table-column prop="Phone" label="操作人(手机号)" width="130">
 					</el-table-column>
-					<el-table-column prop="Action" label="动作">
+					<el-table-column prop="Action" label="动作"width="130">
 					</el-table-column>
-					<el-table-column prop="ObjectId" label="对象Id">
+					<el-table-column prop="ObjectId" label="对象Id" width="130">
 					</el-table-column>
 					<el-table-column prop="Note" label="操作说明">
 					</el-table-column>
@@ -184,8 +184,8 @@
 							url: this.baseUrl + 'service/user_log/export',
 							data: {
 								"Comming": "revit",
-								"ProjId": "string",
-								"UserId": "string"
+								"ProjId": this.projId,
+						"UserId": this.loginUserId
 							},
 							responseType: 'blob'
 						})
@@ -238,9 +238,10 @@
 					console.log(selection, rowData);
 				},
 				keyChange: function () {
+					let _this=this;
 					if (this.keyword) {
 						this.tableData = this.showData.filter(function (item) {
-							return searchAllValue(item, this.keyword)
+							return searchAllValue(item, _this.keyword)
 						});
 					} else {
 						this.tableData = this.showData;

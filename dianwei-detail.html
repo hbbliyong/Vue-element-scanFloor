@@ -95,6 +95,30 @@
 			width: 150px;
 			height: 150px;
 		}
+
+		.pic_big {
+			position: fixed;
+			z-index: 120;
+			left: 0;
+			top: 0;
+			right: 0;
+			bottom: 0;
+			background-color: #eee;
+
+		}
+
+		.pic_big>img {
+			position: absolute;
+			width: 150rem;
+			height: 150rem;
+			top: 50%;
+			left: 50%;
+			-webkit-transform: translateY(-50%) translateX(-50%);
+			transform: translateY(-50%) translateX(-50%);
+			-ms-transform: translateY(-50%) translateX(-50%);
+			-o-transform: translateY(-50%) translateX(-50%);
+			-moz-transform: translateY(-50%) translateX(-50%);
+		}
 	</style>
 </head>
 
@@ -131,22 +155,26 @@
 		</el-row>
 		<el-row>
 			<div>
-				<ul class="menu" v-for="(item,index) in 4">
-					<li :class="{'selected':index===clickIndex}" @click="selected(index)">
+				<ul class="menu">
+					<li v-for="(item,index) in Point.ImageList" :class="{'selected':index===clickIndex}" @click="selected(index)">
 						<div>
-							<img :src="'img/'+(item+nameIndex)+'.jpg'" />
-							<a href="#"></a>
+							<h5>{{item.Key}}</h5>
+							<img @click="showImg(item.Key)" :src="PictureServerUrl(item.Key,150,150)" />
+							<!-- <a href="#"></a> -->
 						</div>
 					</li>
 				</ul>
 			</div>
+			<!-- <div class="pic_big" v-show="imgShow" @click="imgShow = !imgShow" @scroll.prevent @touchmove.prevent>
+				<img :src="bigImg" alt="" />
+			</div> -->
 		</el-row>
 	</div>
 	<script>
 		// $(document).ready(function(){
 		// 	alert('XXX')
 		// })
-	var app=	new Vue({
+		var app = new Vue({
 			el: '#app',
 			data: {
 				Point: {
@@ -158,24 +186,31 @@
 				UserId: '',
 				baseUrl: 'http://172.16.0.189:8080/ScanBuilding/',
 				clickIndex: '',
-				nameIndex: 0
+				nameIndex: 0,
+				imgShow: false,
+				bigImg: null, //大图
 			},
-			created:function(){
-			
+			created: function () {
+
+			},
+			computed: {
+				imageCount: function () {
+					let count = this.Point.ImageList.length;
+					return count;
+				}
 			},
 			mounted: function () {
-		
+
 				// this.ProjId = GetQueryString('projId') || 'Pj1101080001';
 				// this.UserId = GetQueryString('userId') || 'revit';
 				// var pointId = GetQueryString('pointId') 
-				let parentData=parent.window.app.$data;
+				let parentData = parent.window.app.$data;
 				this.ProjId = parentData.projId || 'Pj1101080001';
-				this.UserId = parentData.UserId|| 'revit';
+				this.UserId = parentData.UserId || 'revit';
 				let pointId = parentData.curPoint.Id;
 				this.getPoint(pointId);
 			},
-			activated:function(){
-			},
+			activated: function () {},
 			methods: {
 				getPoint: function (ponitId) {
 					var _this = this;
@@ -216,8 +251,8 @@
 					this.clickIndex = index;
 				},
 				qrcode: function (point) {
-					var ele=document.getElementById("qrcode");
-					while(ele.firstChild){
+					var ele = document.getElementById("qrcode");
+					while (ele.firstChild) {
 						ele.removeChild(ele.firstChild);
 					}
 					var qrcode = new QRCode(ele, {
@@ -228,7 +263,24 @@
 						colorLight: "#ffffff",
 						correctLevel: QRCode.CorrectLevel.H
 					});
-				}
+				},
+				PictureServerUrl: function (key, width, height) {
+					if (!key) {
+						return 'img/1.jpg';
+					}
+					var baseUrl = 'http://192.168.20.225:8080/';
+
+					var url = baseUrl + 'image-service/common/image_get?systemId=dev&key=' + key;
+					if (width && height)
+						url += '&width=' + width + '&height=' + height;
+					return url;
+				},
+				showImg: function (img) {
+					let parentData = parent.window.app.$data;
+					parentData.imgShow = true
+					parentData.bigImg = this.PictureServerUrl(img, 500, 500);
+					alert(parentData.bigImg);
+				},
 			}
 		})
 	</script>

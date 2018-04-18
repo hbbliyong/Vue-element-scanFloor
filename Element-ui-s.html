@@ -10,7 +10,7 @@
 	<!-- <script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script> -->
 	<!-- 先引入 Vue -->
 	<script src="https://unpkg.com/vue/dist/vue.js"></script>
-	<!-- 引入组件库 --> 
+	<!-- 引入组件库 -->
 	<script src="https://unpkg.com/element-ui/lib/index.js"></script>
 
 	<link rel="stylesheet" type="text/css" href="bower_components/handsontable/dist/handsontable.full.min.css">
@@ -21,7 +21,7 @@
 	<script src="bower_components/moment/moment.js"></script>
 	<script src="js/tools.js"></script>
 	<script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script>
-	<style type="text/css"> 
+	<style type="text/css">
 		[class^="el-icon-fa"],
 		[class*=" el-icon-fa"] {
 			display: inline-block;
@@ -95,6 +95,29 @@
 			width: 190px;
 			height: 35px;
 			background-color: #DDDDDD
+		}
+		.pic_big {
+			position: fixed;
+			z-index: 9999;
+			left: 0;
+			top: 0;
+			right: 0;
+			bottom: 0;
+			background-color: #eee;
+
+		}
+
+		.pic_big>img {
+			position: absolute;
+			width: 800px;
+			height: 800px;
+			top: 50%;
+			left: 50%;
+			-webkit-transform: translateY(-50%) translateX(-50%);
+			transform: translateY(-50%) translateX(-50%);
+			-ms-transform: translateY(-50%) translateX(-50%);
+			-o-transform: translateY(-50%) translateX(-50%);
+			-moz-transform: translateY(-50%) translateX(-50%);
 		}
 	</style>
 </head>
@@ -210,8 +233,8 @@
 			</div>
 		</el-row>
 		<el-dialog :visible.sync="showDianWei" width="380px">
-				<!-- <iframe id='pointDetail' src="dianwei-detail.html?pointId=curPoint.Id&projId=projId&userId=UserId" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe> -->
-				<iframe name="details" id='pointDetail' src="dianwei-detail.html" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe>
+			<!-- <iframe id='pointDetail' src="dianwei-detail.html?pointId=curPoint.Id&projId=projId&userId=UserId" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe> -->
+			<iframe name="details" id='pointDetail' src="dianwei-detail.html" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe>
 		</el-dialog>
 		<el-dialog title="自定义扫楼时间段" :visible.sync="dialogFormVisible">
 			<el-form>
@@ -225,6 +248,9 @@
 				<el-button type="primary" @click="dialogFormVisible = false;search();">确 定</el-button>
 			</div>
 		</el-dialog>
+		<div class="pic_big" v-show="imgShow" @click="imgShow = !imgShow" @scroll.prevent @touchmove.prevent>
+			<img :src="bigImg" alt="" />
+		</div>
 	</div>
 	<script>
 		/*API测试地址*/
@@ -265,6 +291,9 @@
 				FmImages: [],
 				fmImageIndex: 0,
 				fmImageNameIndex: 0,
+				//显示点位大图
+				imgShow: false,
+				bigImg: null, //大图
 			},
 			created: function () {
 				//TODO:获取请求参数中的projId和UserId
@@ -385,7 +414,6 @@
 						renderer: pointRenderer
 					}, {
 						data: 'Family',
-
 						type: 'dropdown',
 						source: this.allFamilyData.map(function (family) {
 							return family.name + '-' + family.code;
@@ -537,7 +565,7 @@
 						})
 				},
 				selected: function (index) {
-					this.fmImageIndex = index;
+					this.clickIndex = index;
 					this.curPoint = (this.PointList[index + this.nameIndex - 1] || {});
 					console.log(this.curPoint.Id);
 				},
@@ -892,7 +920,7 @@
 
 					var url = baseUrl + 'image-service/common/image_get?systemId=dev&key=' + key;
 					if (width && height)
-						url += '&width=' + widht + '&height' + height;
+						url += '&width=' + width + '&height=' + height;
 					return url;
 				},
 				deleteUndefinedProperty: function (data) {
