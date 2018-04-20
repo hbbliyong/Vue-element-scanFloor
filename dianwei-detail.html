@@ -25,10 +25,12 @@
 		}
 
 		li {
-			float: left;
+			/* float: left; */
 			padding: 10px;
 			margin: 10px;
-			display: inline-block; //border: 1px solid black;
+			display: inline-block;
+			
+			position: relative;
 		}
 
 		.selected {
@@ -37,10 +39,8 @@
 
 		.el-row {
 			margin-bottom: 0px;
-			border: 1px solid #d9d9d9; //background: #ffeeff;
-			&:last-child {
-				margin-bottom: 0;
-			}
+			border: 1px solid #d9d9d9;
+			/* background: #ffeeff; */
 		}
 
 		h3 {
@@ -69,7 +69,7 @@
 		}
 
 		.el-input__inner {
-			width: 220px;
+			width: 320px;
 			border-top-width: 0px;
 			border-left-width: 0px;
 			border-right-width: 0px;
@@ -87,13 +87,19 @@
 		}
 
 		li>div {
-			width: 150px;
-			height: 150px;
+			width: 160px;
+			height: 160px;
+			border: 1px solid black;
 		}
 
 		li>div>img {
-			width: 150px;
-			height: 150px;
+			width: 160px;
+			height: 160px;
+		}
+
+		li>div>span {
+			position: absolute;
+			top: 70%;
 		}
 
 		.pic_big {
@@ -123,7 +129,7 @@
 </head>
 
 <body>
-	<div id="app" style="width: 350px;">
+	<div id="app" style="width: 100%;">
 		<el-row>
 			<div class="erweima">
 				<!--<img src="img/1.jpg" />-->
@@ -158,7 +164,7 @@
 				<ul class="menu">
 					<li v-for="(item,index) in Point.ImageList" :class="{'selected':index===clickIndex}" @click="selected(index)">
 						<div>
-							<h5>{{item.Key}}</h5>
+							<span>{{item.Key}}</span>
 							<img @click="showImg(item.Key)" :src="PictureServerUrl(item.Key,150,150)" />
 							<!-- <a href="#"></a> -->
 						</div>
@@ -278,8 +284,8 @@
 				showImg: function (img) {
 					let parentData = parent.window.app.$data;
 					parentData.imgShow = true
-					parentData.bigImg = this.PictureServerUrl(img, 500, 500);
-					alert(parentData.bigImg);
+					parentData.bigImg = this.PictureServerUrl(img, 800, 800);
+					//alert(parentData.bigImg);
 				},
 			}
 		})

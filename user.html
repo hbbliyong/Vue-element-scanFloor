@@ -82,10 +82,11 @@
 		 * 全属性搜索
 		 */
 		function searchAllValue(data, key) {
-			//				console.dirxml(data)
-			//				console.log(key)
+							// console.dirxml(data)
+							// console.log(key)
+			let keyHeader=['UserName','Phone','Note'];				
 			for (var prop in data) {
-				if (data[prop] && data[prop].indexOf(key) > -1) {
+				if (data[prop] &&keyHeader.indexOf(prop)>-1&& data[prop].indexOf(key) > -1) {
 					return true;
 				}
 			}
@@ -225,7 +226,7 @@
 
 					for (var i = 0; i < this.tableData.length; i++) {
 						//检测所有电话号码是否正确
-						var mobile = /^1[3|5|8]\d{9}$/;
+						var mobile = /^1[3|5|8|7]\d{9}$/;
 						if (!mobile.test(this.tableData[i].Phone)) {
 							this.warning('电话号码输入有误！,请修改后保存！');
 							return;

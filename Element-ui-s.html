@@ -33,6 +33,10 @@
 		}
 	</style>
 	<style>
+		#app {
+			min-width: 1169px;
+		}
+
 		.image {
 			width: 200px;
 			height: 200px;
@@ -96,6 +100,7 @@
 			height: 35px;
 			background-color: #DDDDDD
 		}
+
 		.pic_big {
 			position: fixed;
 			z-index: 9999;
@@ -103,8 +108,8 @@
 			top: 0;
 			right: 0;
 			bottom: 0;
-			background-color: #eee;
-
+			/* background-color: #eee; */
+			background-color: #808080;
 		}
 
 		.pic_big>img {
@@ -172,7 +177,7 @@
 							<div class="dianwei">
 								<h3 style="padding: -20px;margin: 5px;">{{((PointList[item+nameIndex-1]||{})).Name}}</h3>
 								<span style="margin: 10px 0px;">附近资产:{{((PointList[item+nameIndex-1]||{})).Total}}个({{((PointList[item+nameIndex-1]||{})).Nocheck}}个未修订)</span>
-								<img :src="PictureServerUrl((PointList[item+nameIndex-1]||{}).Image)" class="img" />
+								<img :src="PictureServerUrl((PointList[item+nameIndex-1]||{}).Image,190,130)" class="img" />
 								<a href="#" @click='showPintDetail((PointList[item+nameIndex-1]||{}).Id)'>
 									<!--<img :src="'img/'+(parseInt(item)+nameIndex)+'.jpg'" class="img" />-->
 									查看详情
@@ -226,13 +231,14 @@
 						<div class="dianwei">
 							<span style="padding: -20px;margin: 5px;">{{(FmImages[item+fmImageNameIndex-1]||{}).Name}}</span>
 							<!-- <img :src="'img/'+(item+fmImageNameIndex)+'.jpg'" class="img" /> -->
-							<img :src="PictureServerUrl((FmImages[item+fmImageNameIndex-1]||{}).Key)" class="img" />
+							<img :src="PictureServerUrl((FmImages[item+fmImageNameIndex-1]||{}).Key,190,130)" @click="showImg((FmImages[item+fmImageNameIndex-1]||{}).Key)"
+							    class="img" />
 						</div>
 					</li>
 				</ul>
 			</div>
 		</el-row>
-		<el-dialog :visible.sync="showDianWei" width="380px">
+		<el-dialog :visible.sync="showDianWei" width="450px">
 			<!-- <iframe id='pointDetail' src="dianwei-detail.html?pointId=curPoint.Id&projId=projId&userId=UserId" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe> -->
 			<iframe name="details" id='pointDetail' src="dianwei-detail.html" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe>
 		</el-dialog>
@@ -286,8 +292,8 @@
 				checkedEq: 1,
 				customDate: [],
 				formLabelWidth: '120px',
-				beginDate: '',
-				endDate: '',
+				beginDate: moment().format('YYYY-MM-DD HH:mm:ss'),
+				endDate: moment().format('YYYY-MM-DD HH:mm:ss'),
 				FmImages: [],
 				fmImageIndex: 0,
 				fmImageNameIndex: 0,
@@ -317,6 +323,12 @@
 				//						_this.initSetting(tabData.FmList, headData);
 				//					});
 				//this.initSetting();
+			},
+			watch: {
+				//当前点位改变，改变加载的相关数据
+				curPoint: function (val, oldVal) {
+					this.initData();
+				}
 			},
 			computed: {
 				//显示的点位标签个数
@@ -431,16 +443,18 @@
 						"BuildId": this.bValue,
 						"Comming": "revit",
 						"FloorId": this.fValue,
-						"PointId": this.curPoint.Id || "",
+						 "PointId": this.curPoint.Id || "",
 						"ProjId": this.projId,
-						"UserId": this.UserId
+						"UserId": this.UserId,
+						"Checked":this.checkedEq
 					};
 					this.deleteUndefinedProperty(postData);
-
+					//点位为未关联点位默认为"",不能被过滤掉
+					// postData.PointId= this.curPoint.Id || "";
 					if (_this.checkedEq) {
 						postData.Checked = 0;
 					}
-
+					console.log(JSON.stringify(postData));
 					var headerUrl = 'http://192.168.30.96:8080/saas-manage/app/restTemplateService/queryObjectPropertyMapping';
 					var headerPostData = {
 						"user_id": this.UserId,
@@ -457,6 +471,7 @@
 							_this.allDatas = datas.data.Family;
 							_this.tabs = []; //清空tab
 							_this.hotElements = [];
+							_this.FmImages = []; //清空图片
 							//所有点位数据中族分类
 							datas.data.Family.forEach(function (data) {
 								_this.tabs.push({
@@ -566,7 +581,7 @@
 				},
 				selected: function (index) {
 					this.clickIndex = index;
-					this.curPoint = (this.PointList[index + this.nameIndex - 1] || {});
+					this.curPoint = (this.PointList[index + this.nameIndex] || {});
 					console.log(this.curPoint.Id);
 				},
 				selectedImage: function (index) {
@@ -581,7 +596,8 @@
 						if (this.nameIndex < this.PointList.length)
 							this.nameIndex += 1;
 					}
-					console.log(this.nameIndex)
+					this.curPoint = (this.PointList[this.clickIndex + this.nameIndex] || {});
+					//	console.log(this.nameIndex)
 				},
 				indexMul: function () {
 					if (this.clickIndex > 0)
@@ -590,6 +606,7 @@
 						if (this.nameIndex > 0)
 							this.nameIndex -= 1;
 					}
+					this.curPoint = (this.PointList[this.clickIndex + this.nameIndex] || {});
 				},
 				imageIndexAdd: function () {
 					if (this.fmImageIndex < 3)
@@ -808,6 +825,7 @@
 						.then(function (res) {
 							if (res.data.Result == 'success') {
 								_this.needSaveData = []; //保存成功，清空需要保存的数据
+								_this.initData();
 							}
 							console.xml(res.data);
 						})
@@ -938,8 +956,13 @@
 							this.deleteUndefinedProperty(d);
 						}
 					}
-
-				}
+				},
+				showImg: function (img) {
+					let parentData = parent.window.app.$data;
+					parentData.imgShow = true
+					parentData.bigImg = this.PictureServerUrl(img, 800, 800);
+					//alert(parentData.bigImg);
+				},
 			}
 		});
 	</script>

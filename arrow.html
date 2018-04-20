@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>arrow</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        .arrow {
+            width: 20px;
+            height: 4px;
+            margin: 0 auto 7px;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-bottom: 4px solid #343c99;
+            transform: rotate(45deg);
+            transform-origin: left;
+        }
+
+        .arrow:after {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 4px solid #343c99;
+            position: absolute;
+            right: -10px;
+            top: -14px;
+            transform: rotate(90deg);
+            transform-origin: bottom;
+        }
+
+        /*箭头部分*/
+
+        .down-arrow {
+            width: 40px;
+            height: 40px;
+        }
+
+        .down-arrow:after {
+            content: '';
+            display: block;
+            width: 25px;
+            height: 25px;
+            border-right: 1px solid #888;
+            border-top: 1px solid #888;
+            -webkit-transform: rotate(135deg);
+            /*箭头方向可以自由切换角度*/
+            transform: rotate(135deg);
+        }
+
+        /*简单*/
+
+        .wb_arrow {
+            border-right: 2px solid #343c99;
+            border-top: 2px solid #343c99;
+            height: 20px;
+            width: 20px;
+            margin: 50px auto 0;
+            transform: rotate(45deg);
+            -webkit-transform: rotate(0deg);
+            /*不加这两个属性三角会比上一个略丑, 大家可以试一下*/
+            border-left: 2px solid transparent;
+            border-bottom: 2px solid transparent;
+        }
+        #example:before{
+        	content: '#';
+        }
+        #example:after{
+        	content: '.';
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box">
+        <p> 右箭头</p>
+        <div class="arrow-right arrow-box">
+            <b class="right">
+                <i class="right-arrow1"></i>
+                <i class="right-arrow2"></i>
+            </b>
+        </div>
+        <div class="arrow"></div>
+        <div class="down-arrow"></div>
+        <div class="arrow"></div>
+        <div class="wb_arrow"></div>
+        <div id="example"></div>
+    </div>
+</body>
+
+</html>
