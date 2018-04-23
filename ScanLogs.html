@@ -16,8 +16,9 @@
 	<!--<script src="https://unpkg.com/element-ui/lib/index.js"></script>-->
 	<script src="https://cdn.bootcss.com/element-ui/2.2.2/index.js"></script>
 	<script src="js/tools.js" type="text/javascript" charset="utf-8"></script>
+	<script src="bower_components/moment/moment.js"></script>
 	<style>
-			.el-col button.button_active {
+		.el-col button.button_active {
 			color: #909399;
 			text-decoration: underline;
 		}
@@ -31,17 +32,17 @@
 				<el-input v-model="keyword" @input="keyChange" placeholder="请输入操作人、动作、对象Id、备注等关键字进行搜索"></el-input>
 			</el-col>
 			<el-col :span="11" :offset="1">
-					<el-button @click="search(30)" :class=" elTopBtn == 30 ? 'button_active' : ''" type="text">一个月内</el-button>
-					<span>|</span>
-					<el-button @click="search(7)" :class=" elTopBtn == 7 ? 'button_active' : ''" type="text">一周内</el-button>
-					<span>|</span>
-					<el-button @click="search(3)" :class=" elTopBtn == 3 ? 'button_active' : ''" type="text">近三天</el-button>
-					<span>|</span>
-					<el-button @click="search(1)" :class=" elTopBtn == 1 ? 'button_active' : ''" type="text">昨天</el-button>
-					<span>|</span>
-					<el-button @click="search(0)" :class=" elTopBtn == 0 ? 'button_active' : ''" type="text">今天</el-button>
-					<span>|</span>
-					<el-button @click="dialogFormVisible = true" :class=" elTopBtn == 5 ? 'button_active' : ''" type="text">自定义 {{showDate()}}</el-button>
+				<el-button @click="search(30)" :class=" elTopBtn == 30 ? 'button_active' : ''" type="text">一个月内</el-button>
+				<span>|</span>
+				<el-button @click="search(7-1)" :class=" elTopBtn == 6 ? 'button_active' : ''" type="text">一周内</el-button>
+				<span>|</span>
+				<el-button @click="search(3-1)" :class=" elTopBtn == 2 ? 'button_active' : ''" type="text">近三天</el-button>
+				<span>|</span>
+				<el-button @click="search(1)" :class=" elTopBtn == 1 ? 'button_active' : ''" type="text">昨天</el-button>
+				<span>|</span>
+				<el-button @click="search(0)" :class=" elTopBtn == 0 ? 'button_active' : ''" type="text">今天</el-button>
+				<span>|</span>
+				<el-button @click="dialogFormVisible = true" :class=" elTopBtn == 5 ? 'button_active' : ''" type="text">自定义 {{showDate()}}</el-button>
 			</el-col>
 			<el-col :span="3">
 				<el-button style="margin-left: 0px;" icon="el-icon-delete" @click="exportData()">导出到Excel</el-button>
@@ -52,9 +53,9 @@
 				<el-table :data="tableData" stripe border style="width: 100%">
 					<el-table-column prop="CreateTime" label="日期" width="160">
 					</el-table-column>
-					<el-table-column prop="Phone" label="操作人(手机号)" width="130">
+					<el-table-column prop="UserPhone" label="操作人(手机号)" width="130">
 					</el-table-column>
-					<el-table-column prop="Action" label="动作"width="130">
+					<el-table-column prop="Action" label="动作" width="130">
 					</el-table-column>
 					<el-table-column prop="ObjectId" label="对象Id" width="130">
 					</el-table-column>
@@ -71,7 +72,7 @@
 				</el-form-item>
 			</el-form>
 			<div slot="footer" class="dialog-footer">
-				<el-button @click="dialogFormVisible = false">取 消</el-button>
+				<el-button @click="dialogFormVisible = false;customDate=[];">取 消</el-button>
 				<el-button type="primary" @click="dialogFormVisible = false;search();">确 定</el-button>
 			</div>
 		</el-dialog>
@@ -99,6 +100,10 @@
 			return false;
 		}
 
+		function formatDate(date) {
+			return moment(date).format('YYYY-MM-DD HH:mm:ss');
+		}
+
 		var app = new Vue({
 			el: "#app",
 			data: {
@@ -114,11 +119,12 @@
 				elTopBtn: 0,
 				dialogFormVisible: false,
 				formLabelWidth: '120px',
+				startDate: formatDate(),
+				endDate: formatDate()
 			},
 			mounted: function () {
 				this.initData();
-				var now = new Date();
-				this.getLogs(now, now);
+				this.getLogs();
 			},
 			methods: {
 				initData: function () {
@@ -129,36 +135,29 @@
 					if (this.customDate == undefined || this.customDate.length == 0)
 						return undefined;
 					else {
-						var reg = /\d{4}-\d{2}-\d{2}/;
-						return '  (' + reg.exec(this.customDate[0].toISOString())[0] + '~' + reg.exec(this.customDate[1].toISOString())[
-							0] + ')';
+						// var reg = /\d{4}-\d{2}-\d{2}/;
+						// return '  (' + reg.exec(this.customDate[0].toISOString())[0] + '~' + reg.exec(this.customDate[1].toISOString())[
+						// 0] + ')';
+						return '  (' + formatDate(this.customDate[0]) + '~' + formatDate(this.customDate[1]) + ')';
 					}
 				},
 				// 获取用户列表
-				getLogs: function (beginTime, endTime) {
+				getLogs: function () {
 					var that = this;
-
-					function format(date) {
-						//var reg = /\d{4}-\d{2}-\d{2}/;
-						//return  reg.exec(date.toISOString())[0];
-						return date.toISOString().replace('T', ' ').replace(/\.\d{3}Z/, '');
-					}
-
 					var data = {
 						"Comming": "revit",
 
-						"PageNum": 10,
-						"PageSize": 10,
+						// "PageNum": 10,
+						// "PageSize": 10,
 						"ProjId": this.projId,
-						"UserId": this.loginUserId
+						"UserId": this.loginUserId,
+						"BeginTime": this.startDate,
+						"EndTime": this.endDate,
 					};
 					if (this.keyword) {
 						data.Filter = this.keyword;
 					}
-					if (beginTime && endTime) {
-						data.BeginTime = format(beginTime);
-						data.EndTime = format(endTime);
-					}
+
 					axios.post(that.baseUrl + 'service/user_log/query', data)
 						.then(function (res) {
 							//console.log(res.data.UserList);
@@ -185,7 +184,9 @@
 							data: {
 								"Comming": "revit",
 								"ProjId": this.projId,
-						"UserId": this.loginUserId
+								"UserId": this.loginUserId,
+								"BeginTime": this.startDate,
+								"EndTime": this.endDate
 							},
 							responseType: 'blob'
 						})
@@ -220,7 +221,10 @@
 					if (day) {
 						this.elTopBtn = day;
 						startTime.setDate(startTime.getDate() - day);
-						this.customDate=[];
+						if (day == 1) {
+							endTime = startTime;
+						}
+						this.customDate = [];
 					} else { //自定义时间
 						if (day == 0) {
 							this.elTopBtn = 0;
@@ -232,13 +236,17 @@
 						startTime = this.customDate[0];
 						endTime = this.customDate[1];
 					}
-					this.getLogs(startTime, endTime);
+
+					this.startDate = formatDate(startTime);
+					this.endDate = formatDate(endTime);
+
+					this.getLogs();
 				},
 				selectChange: function (selection, rowData) {
 					console.log(selection, rowData);
 				},
 				keyChange: function () {
-					let _this=this;
+					let _this = this;
 					if (this.keyword) {
 						this.tableData = this.showData.filter(function (item) {
 							return searchAllValue(item, _this.keyword)
@@ -247,7 +255,8 @@
 						this.tableData = this.showData;
 					}
 
-				}
+				},
+
 			}
 		})
 	</script>

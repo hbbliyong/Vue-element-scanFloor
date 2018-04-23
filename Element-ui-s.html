@@ -151,9 +151,9 @@
 			<el-col :span="8">
 				<el-button @click="search(30)" :class=" elTopBtn == 30 ? 'button_active' : ''" type="text">一个月内</el-button>
 				<span>|</span>
-				<el-button @click="search(7)" :class=" elTopBtn == 7 ? 'button_active' : ''" type="text">一周内</el-button>
+				<el-button @click="search(7-1)" :class=" elTopBtn == 7 ? 'button_active' : ''" type="text">一周内</el-button>
 				<span>|</span>
-				<el-button @click="search(3)" :class=" elTopBtn == 3 ? 'button_active' : ''" type="text">近三天</el-button>
+				<el-button @click="search(3-1)" :class=" elTopBtn == 3 ? 'button_active' : ''" type="text">近三天</el-button>
 				<span>|</span>
 				<el-button @click="search(1)" :class=" elTopBtn == 1 ? 'button_active' : ''" type="text">昨天</el-button>
 				<span>|</span>
@@ -175,8 +175,8 @@
 					<ul class="menu">
 						<li :class="{'selected':index===clickIndex}" @click="selected(index)" v-for="(item,index) in pointCount">
 							<div class="dianwei">
-								<h3 style="padding: -20px;margin: 5px;">{{((PointList[item+nameIndex-1]||{})).Name}}</h3>
-								<span style="margin: 10px 0px;">附近资产:{{((PointList[item+nameIndex-1]||{})).Total}}个({{((PointList[item+nameIndex-1]||{})).Nocheck}}个未修订)</span>
+								<h3 style="padding: -20px;margin: 5px;">{{((PointList[item+nameIndex-1]||{})).Name||'无名称'}}</h3>
+								<span style="margin: 10px 0px;">附近资产:{{((PointList[item+nameIndex-1]||{})).Total||'0'}}个({{((PointList[item+nameIndex-1]||{})).Nocheck||'0'}}个未修订)</span>
 								<img :src="PictureServerUrl((PointList[item+nameIndex-1]||{}).Image,190,130)" class="img" />
 								<a href="#" @click='showPintDetail((PointList[item+nameIndex-1]||{}).Id)'>
 									<!--<img :src="'img/'+(parseInt(item)+nameIndex)+'.jpg'" class="img" />-->
@@ -193,6 +193,11 @@
 						<el-button type="text" icon="el-icon-d-arrow-right" @click="indexAdd()"></el-button>
 					</div>
 				</div>
+			</el-col>
+		</el-row>
+		<el-row v-if="isActive" style="background-color: #EEEEEE">
+			<el-col :span="4" :offset="11">
+				<el-checkbox v-model="isAllPoint" style="margin-bottom: 10px">选择全部</el-checkbox>
 			</el-col>
 		</el-row>
 		<el-row>
@@ -250,7 +255,7 @@
 				</el-form-item>
 			</el-form>
 			<div slot="footer" class="dialog-footer">
-				<el-button @click="dialogFormVisible = false">取 消</el-button>
+				<el-button @click="dialogFormVisible = false;customDate=[];">取 消</el-button>
 				<el-button type="primary" @click="dialogFormVisible = false;search();">确 定</el-button>
 			</div>
 		</el-dialog>
@@ -300,6 +305,7 @@
 				//显示点位大图
 				imgShow: false,
 				bigImg: null, //大图
+				isAllPoint: false
 			},
 			created: function () {
 				//TODO:获取请求参数中的projId和UserId
@@ -328,11 +334,19 @@
 				//当前点位改变，改变加载的相关数据
 				curPoint: function (val, oldVal) {
 					this.initData();
+					console.log('点位改变');
+				},
+				//是否选择全部点位
+				isAllPoint: function (val, oldVal) {
+					if (val) this.initData();
 				}
 			},
 			computed: {
 				//显示的点位标签个数
 				pointCount: function () {
+					//pointList改变，重置nameindex
+					this.nameIndex = 0;
+					this.clickIndex = 0;
 					let count = this.PointList.length;
 					return count > 4 ? 4 : count;
 				},
@@ -443,34 +457,27 @@
 						"BuildId": this.bValue,
 						"Comming": "revit",
 						"FloorId": this.fValue,
-						 "PointId": this.curPoint.Id || "",
+						// "PointId": this.curPoint.Id || "",
 						"ProjId": this.projId,
 						"UserId": this.UserId,
-						"Checked":this.checkedEq
+						"Checked": this.checkedEq
 					};
 					this.deleteUndefinedProperty(postData);
 					//点位为未关联点位默认为"",不能被过滤掉
-					// postData.PointId= this.curPoint.Id || "";
+					if (!this.isAllPoint)
+						postData.PointId = this.curPoint.Id || "";
+					
+					postData.FloorId = this.fValue || "";
 					if (_this.checkedEq) {
 						postData.Checked = 0;
 					}
-					console.log(JSON.stringify(postData));
-					var headerUrl = 'http://192.168.30.96:8080/saas-manage/app/restTemplateService/queryObjectPropertyMapping';
-					var headerPostData = {
-						"user_id": this.UserId,
-						"code": "XXX", //通用设备信息点
-						"type": "equipFamily",
-						"app_type": "revit"
-					};
+					// console.log(JSON.stringify(postData));
 
-					axios.all([
-							axios.post(_this.baseUrl + "service/fm/queryRevit", postData),
-							axios.post(headerUrl, headerPostData)
-						])
-						.then(axios.spread(function (datas, header) {
+					axios.post(_this.baseUrl + "service/fm/queryRevit", postData)
+						.then(function (datas) {
 							_this.allDatas = datas.data.Family;
 							_this.tabs = []; //清空tab
-							_this.hotElements = [];
+							//_this.hotElements = [];
 							_this.FmImages = []; //清空图片
 							//所有点位数据中族分类
 							datas.data.Family.forEach(function (data) {
@@ -481,13 +488,18 @@
 									FmList: data.FmList
 								});
 							});
+							let defaultData = datas.data.Family[0]; //TODO:如果后台排序不准的话，需要查找未归类设备
 							//默认显示未分类设备
-							if (datas.data.Family[0]) {
+							if (defaultData) {
 								_this.$nextTick(function () {
-									_this.initSetting(datas.data.Family[0].FmList, header.data.Content);
+									//加载数据
+									_this.getParamHeader(defaultData.Code, function (headData) {
+										_this.initSetting(defaultData.FmList, headData);
+									});
+									//_this.initSetting(datas.data.Family[0].FmList, header.data.Content);
 								});
 							}
-						}))
+						})
 						.catch(function (err) {
 							console.log(err)
 						})
@@ -498,12 +510,6 @@
 					axios.get(this.baseUrl + "service/dict/equipment_family")
 						.then(function (res) {
 							_this.allFamilyData = res.data.Content;
-
-							//增加通用族
-							// _this.allFamilyData.push({
-							// 	code: 'eq-gen',
-							// 	'name': '基本族'
-							// });
 						})
 						.catch(function (err) {
 							console.log(err);
@@ -542,6 +548,7 @@
 							//iframe.src = src;
 							details.window.app.getPoint(pointId);
 					}
+					return false;
 				},
 				tabClick: function () {
 					var tabData = this.tabs[this.tabId]
@@ -550,6 +557,8 @@
 					for (hot in this.hotElements) {
 						if (this.hotElements[hot].rootElement.id == hotId) {
 							this.currHot = this.hotElements[hot];
+							//this.currHot.loadData(tabData.FmList);
+							this.currHot.render();
 							return;
 						}
 					}
@@ -572,7 +581,7 @@
 
 					axios.post(headerUrl, headerPostData)
 						.then(function (datas) {
-							//默认显示未分类设备
+							console.dir(datas);
 							fn(datas.data.Content);
 						})
 						.catch(function (err) {
@@ -582,7 +591,7 @@
 				selected: function (index) {
 					this.clickIndex = index;
 					this.curPoint = (this.PointList[index + this.nameIndex] || {});
-					console.log(this.curPoint.Id);
+					this.isAllPoint = false; //全部选中取消选中
 				},
 				selectedImage: function (index) {
 					this.fmImageIndex = index;
@@ -593,7 +602,7 @@
 					if (this.clickIndex < 3)
 						this.clickIndex += 1;
 					else {
-						if (this.nameIndex < this.PointList.length)
+						if (this.nameIndex < this.PointList.length - 4)
 							this.nameIndex += 1;
 					}
 					this.curPoint = (this.PointList[this.clickIndex + this.nameIndex] || {});
@@ -649,6 +658,7 @@
 					for (hot in this.hotElements) {
 						if (this.hotElements[hot].rootElement.id == hotId) {
 							this.currHot = this.hotElements[hot];
+							this.currHot.loadData(datas);
 							return;
 						}
 					}
@@ -774,8 +784,9 @@
 							preventScrolling.value = true;
 						}
 					};
+					console.log(datas, 'columnsSetting')
 					var hot = new Handsontable(hotElement, hotSettings);
-					hot.render();
+					// hot.render();
 					this.hotElements.push(hot);
 					this.currHot = hot;
 					console.log("加载数据到handsontable")
@@ -826,6 +837,7 @@
 							if (res.data.Result == 'success') {
 								_this.needSaveData = []; //保存成功，清空需要保存的数据
 								_this.initData();
+								console.log('数据保存,重新加载数据');
 							}
 							console.xml(res.data);
 						})
@@ -887,7 +899,8 @@
 								_this.curPoint = _this.PointList[0];
 								//_this.pointCount = _this.PointList.length > 4 ? 4 : _this.PointList.length;
 								//加载默认数据
-								_this.initData();
+								// _this.initData();//此处不再加载数据，改为点位变动的时候加载，数据加载完成默认点位会变化为第一个
+								// console.log('加载完成点位数据，初始化数据');
 							} else { //没有数据清空Tab
 								_this.tabs = [];
 								_this.PointList = [];
