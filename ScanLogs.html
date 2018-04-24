@@ -62,9 +62,10 @@
 					<el-table-column prop="Note" label="操作说明">
 					</el-table-column>
 				</el-table>
+				<el-pagination background layout="prev,pager,next" :total="100" @current-change='currentChange'></el-pagination>
 			</div>
 		</el-row>
-		<el-dialog title="自定义扫楼时间段" :visible.sync="dialogFormVisible">
+		<el-dialog title="自定义扫楼时间段" :visible.sync="dialogFormVisible" style="width:1050px">
 			<el-form>
 				<el-form-item label="扫楼时间" :label-width="formLabelWidth">
 					<el-date-picker v-model="customDate" type="daterange" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']">
@@ -109,7 +110,7 @@
 			data: {
 				projId: '', //项目id
 				loginUserId: '', //登录用户的Id
-				baseUrl: 'http://172.16.0.189:8080/ScanBuilding/',
+				baseUrl: 'https://172.16.0.189:8080/ScanBuilding/',
 				//baseUrl: 'http://172.16.2.198:8080/',
 				tableData: [],
 				showData: [],
@@ -142,13 +143,13 @@
 					}
 				},
 				// 获取用户列表
-				getLogs: function () {
+				getLogs: function (pageNum) {
+					pageNum = pageNum || 1;
 					var that = this;
 					var data = {
 						"Comming": "revit",
-
-						// "PageNum": 10,
-						// "PageSize": 10,
+						"PageNum": pageNum,
+						"PageSize": 10,
 						"ProjId": this.projId,
 						"UserId": this.loginUserId,
 						"BeginTime": this.startDate,
@@ -170,11 +171,9 @@
 							console.log(error);
 						})
 				},
-				addUser: function () {
-					var newData = shallowCopy(this.tableData[this.tableData.length - 1])
-					newData.UserId = undefined;
-
-					this.tableData.push(newData);
+				currentChange: function (val) {
+					this.getLogs(val);
+					console.log(val);
 				},
 				exportData: function () {
 					//创建一个blob对象,file的一种
@@ -254,9 +253,7 @@
 					} else {
 						this.tableData = this.showData;
 					}
-
 				},
-
 			}
 		})
 	</script>

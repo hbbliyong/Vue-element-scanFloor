@@ -178,7 +178,7 @@
 								<h3 style="padding: -20px;margin: 5px;">{{((PointList[item+nameIndex-1]||{})).Name||'无名称'}}</h3>
 								<span style="margin: 10px 0px;">附近资产:{{((PointList[item+nameIndex-1]||{})).Total||'0'}}个({{((PointList[item+nameIndex-1]||{})).Nocheck||'0'}}个未修订)</span>
 								<img :src="PictureServerUrl((PointList[item+nameIndex-1]||{}).Image,190,130)" class="img" />
-								<a href="#" @click='showPintDetail((PointList[item+nameIndex-1]||{}).Id)'>
+								<a href="#" v-if='(PointList[item+nameIndex-1]||{}).Id&&(PointList[item+nameIndex-1]||{}).Id!=-1' @click='showPintDetail((PointList[item+nameIndex-1]||{}).Id)'>
 									<!--<img :src="'img/'+(parseInt(item)+nameIndex)+'.jpg'" class="img" />-->
 									查看详情
 								</a>
@@ -195,12 +195,12 @@
 				</div>
 			</el-col>
 		</el-row>
-		<el-row v-if="isActive" style="background-color: #EEEEEE">
+		<!-- <el-row v-if="isActive" style="background-color: #EEEEEE">
 			<el-col :span="4" :offset="11">
 				<el-checkbox v-model="isAllPoint" style="margin-bottom: 10px">选择全部</el-checkbox>
 			</el-col>
-		</el-row>
-		<el-row>
+		</el-row>-->
+		<el-row> 
 			<el-col :span="4" :offset="10">
 				<!-- <el-button  icon='fa fa-angle-double-up fa-2x' @click="toggle">显示隐藏</el-button> -->
 				<div @click="toggle" class="toggleControl">
@@ -247,7 +247,7 @@
 			<!-- <iframe id='pointDetail' src="dianwei-detail.html?pointId=curPoint.Id&projId=projId&userId=UserId" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe> -->
 			<iframe name="details" id='pointDetail' src="dianwei-detail.html" frameborder="0" style="margin: -20px; width: -webkit-fill-available;height: -webkit-fill-available;"></iframe>
 		</el-dialog>
-		<el-dialog title="自定义扫楼时间段" :visible.sync="dialogFormVisible">
+		<el-dialog title="自定义扫楼时间段" :visible.sync="dialogFormVisible" style="width: 1030px">
 			<el-form>
 				<el-form-item label="扫楼时间" :label-width="formLabelWidth">
 					<el-date-picker v-model="customDate" type="daterange" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']">
@@ -464,9 +464,9 @@
 					};
 					this.deleteUndefinedProperty(postData);
 					//点位为未关联点位默认为"",不能被过滤掉
-					if (!this.isAllPoint)
+					if (this.curPoint.Id!='-1')
 						postData.PointId = this.curPoint.Id || "";
-					
+
 					postData.FloorId = this.fValue || "";
 					if (_this.checkedEq) {
 						postData.Checked = 0;
@@ -896,7 +896,20 @@
 						.then(function (res) {
 							if (res.data.PointList.length > 0) {
 								_this.PointList = res.data.PointList;
-								_this.curPoint = _this.PointList[0];
+							
+								let allPoint = {
+									"Id": "-1",								
+									"Name": "全部",
+									"Nocheck": 0,
+									"Total": 0
+								};
+								_this.PointList.forEach(function(point){
+									allPoint.Nocheck+=point.Nocheck;
+									allPoint.Total+=point.Total;
+								});
+								_this.PointList.splice(0,0,allPoint);
+								//_this.curPoint = _this.PointList[0];
+								_this.curPoint =allPoint;
 								//_this.pointCount = _this.PointList.length > 4 ? 4 : _this.PointList.length;
 								//加载默认数据
 								// _this.initData();//此处不再加载数据，改为点位变动的时候加载，数据加载完成默认点位会变化为第一个
