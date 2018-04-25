@@ -26,7 +26,7 @@
 </head>
 
 <body>
-	<div id="app" style="width: 1200px;">
+	<div id="app" style="width: 1000px;">
 		<el-row :gutter="20" style="margin: 15px;">
 			<el-col :span="9">
 				<el-input v-model="keyword" @input="keyChange" placeholder="请输入操作人、动作、对象Id、备注等关键字进行搜索"></el-input>
@@ -45,7 +45,7 @@
 				<el-button @click="dialogFormVisible = true" :class=" elTopBtn == 5 ? 'button_active' : ''" type="text">自定义 {{showDate()}}</el-button>
 			</el-col>
 			<el-col :span="3">
-				<el-button style="margin-left: 0px;" icon="el-icon-delete" @click="exportData()">导出到Excel</el-button>
+				<el-button style="margin-left: -10px;" icon="el-icon-delete" @click="exportData()">导出到Excel</el-button>
 			</el-col>
 		</el-row>
 		<el-row>
@@ -53,16 +53,25 @@
 				<el-table :data="tableData" stripe border style="width: 100%">
 					<el-table-column prop="CreateTime" label="日期" width="160">
 					</el-table-column>
-					<el-table-column prop="UserPhone" label="操作人(手机号)" width="130">
+					<el-table-column prop="UserPhone" label="操作人(手机号)" width="165">
 					</el-table-column>
 					<el-table-column prop="Action" label="动作" width="130">
 					</el-table-column>
-					<el-table-column prop="ObjectId" label="对象Id" width="130">
+					<el-table-column prop="ObjectId" label="对象Id" width="149">
 					</el-table-column>
+					<!-- <el-table-column prop="Note" label="操作说明">
+					</el-table-column> -->
 					<el-table-column prop="Note" label="操作说明">
+						<template slot-scope="scope">
+							<ul>
+								<li v-for="item in scope.row.Note.split('\n')" style="list-style: none;">
+									{{item}}
+								</li>
+							</ul>
+						</template>
 					</el-table-column>
 				</el-table>
-				<el-pagination background layout="prev,pager,next" :total="100" @current-change='currentChange'></el-pagination>
+				<el-pagination background layout="prev,pager,next" :total="tableData.length" @current-change='currentChange'></el-pagination>
 			</div>
 		</el-row>
 		<el-dialog title="自定义扫楼时间段" :visible.sync="dialogFormVisible" style="width:1050px">
@@ -110,7 +119,7 @@
 			data: {
 				projId: '', //项目id
 				loginUserId: '', //登录用户的Id
-				baseUrl: 'https://172.16.0.189:8080/ScanBuilding/',
+				baseUrl: 'http://172.16.3.12:8080/ScanBuilding/',
 				//baseUrl: 'http://172.16.2.198:8080/',
 				tableData: [],
 				showData: [],

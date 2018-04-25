@@ -7,17 +7,19 @@
 	<!-- 引入样式 -->
 	<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
 	<link rel="stylesheet" href="css/font-awesome.css" />
+	<link rel="stylesheet" href="bower_components/chosen/chosen.css"/>
 	<!-- <script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script> -->
 	<!-- 先引入 Vue -->
 	<script src="https://unpkg.com/vue/dist/vue.js"></script>
 	<!-- 引入组件库 -->
 	<script src="https://unpkg.com/element-ui/lib/index.js"></script>
-
+	<script src="bower_components/juqery/dist/jquery.js"></script>
 	<link rel="stylesheet" type="text/css" href="bower_components/handsontable/dist/handsontable.full.min.css">
 	<script src="bower_components/handsontable/dist//handsontable.full.js"></script>
 	<script src="bower_components/axios/dist/axios.js"></script>
-	<script src="https://cdn.bootcss.com/underscore.js/1.8.3/underscore-min.js"></script>
-	<script src="https://cdn.bootcss.com/qs/6.5.1/qs.js"></script>
+	<script src="bower_components/chosen/chosen.jquery.js"></script>
+	<script src="js/handsontable-chosen-editor.js"></script>
+	
 	<script src="bower_components/moment/moment.js"></script>
 	<script src="js/tools.js"></script>
 	<script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script>
@@ -49,7 +51,7 @@
 			list-style: none;
 		}
 
-		li {
+		.menu>li {
 			padding: 0px 15px;
 			margin: 10px;
 			width: 230px;
@@ -78,7 +80,7 @@
 			height: 130px;
 		}
 
-		.selected {
+		.menu .selected {
 			border: 2px solid blue;
 		}
 
@@ -200,7 +202,7 @@
 				<el-checkbox v-model="isAllPoint" style="margin-bottom: 10px">选择全部</el-checkbox>
 			</el-col>
 		</el-row>-->
-		<el-row> 
+		<el-row>
 			<el-col :span="4" :offset="10">
 				<!-- <el-button  icon='fa fa-angle-double-up fa-2x' @click="toggle">显示隐藏</el-button> -->
 				<div @click="toggle" class="toggleControl">
@@ -271,7 +273,7 @@
 			data: {
 				projId: 'Pj1101080001',
 				UserId: 'revit',
-				baseUrl: 'http://172.16.0.189:8080/ScanBuilding/',
+				baseUrl: 'http://172.16.3.12:8080/ScanBuilding/',
 				builds: [],
 				bValue: '',
 				floors: [],
@@ -464,7 +466,7 @@
 					};
 					this.deleteUndefinedProperty(postData);
 					//点位为未关联点位默认为"",不能被过滤掉
-					if (this.curPoint.Id!='-1')
+					if (this.curPoint.Id != '-1')
 						postData.PointId = this.curPoint.Id || "";
 
 					postData.FloorId = this.fValue || "";
@@ -665,14 +667,76 @@
 					var hotElement = document.querySelector('#' + hotId);
 					var columnsSetting = this.getDefaultColumnSetting();
 					var headers = this.getDefaultHeader();
+					function customDropdownRenderer (instance, td, row, col, prop, value, cellProperties) {
+						var selectedId;
+						var optionsList = cellProperties.chosenOptions.data;
+
+						if (typeof optionsList === "undefined" || typeof optionsList.length === "undefined" || !optionsList.length) {
+							Handsontable.renderers.TextRenderer(instance, td, row, col, prop, value, cellProperties);
+							return td;
+						}
+
+						var values = (value + "").split(",");
+						value = [];
+						for (var index = 0; index < optionsList.length; index++) {
+
+							if (values.indexOf(optionsList[index].code + "") > -1) {
+								selectedId = optionsList[index].code;
+								value.push(optionsList[index].name);
+							}
+						}
+						value = value.join(", ");
+
+						// Handsontable.TextCell.renderer(instance, td, row, col, prop, value, cellProperties);
+						Handsontable.renderers.TextRenderer(instance, td, row, col, prop, value, cellProperties);
+						return td;
+					}
 					//处理列头与数据参数
 					for (let i = 0; i < headersData.length; i++) {
 						let head = headersData[i];
-						columnsSetting.push({
+						//列头
+						headers.push(head.info_point_code);
+						//列参数
+						let columnTypes = {
 							data: head.infopoint_code,
 							type: 'text'
-						});
-						headers.push(head.info_point_code);
+						};
+						switch (head.collection_cmpt_code) {
+							case 'TextBox_Double_A1':
+								columnTypes.type = 'numeric';
+								break;
+							case 'Textbox_DoubleUnit_A2':
+								columnTypes.type = 'numeric';
+								break;
+							case 'TextBox_String_B1':
+
+								break;
+							case 'DataTime_Date_C5':
+								columnTypes.type = 'date';
+								columnTypes.dateFormat = 'YYYY-MM-DD';
+								break;
+							case 'Enum_D1':
+								if (head.dataSource) {
+									// columnTypes.type = 'dropdown';
+									// columnTypes.source = head.dataSource.map(function (data) {
+									// 	return data.name + '-' + data.code;
+									// });
+									columnTypes = {
+										data: head.infopoint_code,
+										renderer: customDropdownRenderer,
+										editor: 'chosen',
+										chosenOptions: {
+											data: head.dataSource
+										}
+									}
+								}
+								break;
+
+							default:
+								break;
+						}
+						columnsSetting.push(columnTypes);
+
 					}
 					//增加只读Id,为了编辑保存数据用
 					columnsSetting.push({
@@ -737,7 +801,16 @@
 								let row = change[0]; //当前被编辑的行数
 								let key = change[1];
 								let value = change[3];
+
+								//特殊处理枚举信息
+								if (value && value.indexOf('-') > -1) {
+									let arr = value.split('-');
+									if (arr.length == 2) {
+										value = arr[1];
+									}
+								}
 								let fmId = _this.currHot.getDataAtRowProp(row, 'FmId');
+								let family = _this.currHot.getDataAtRowProp(row, 'Family').split('-')[1];
 								//let rowData = _this.currHot.getDataAtRow(row);
 								let length = _this.needSaveData.length || 1;
 								//检测是否有重复数据，如果有重复数据，直接替换掉
@@ -746,21 +819,14 @@
 									if (element && element.FmId == fmId) {
 										//删除已存在的数据，防止多次添加同一条数据
 										//_this.needSaveData.splice(index, 1);
-										//特殊处理族信息
-										if (key == 'Family') {
-											let arr = value.split('-');
-											if (arr.length == 2) {
-												value = arr[1];
-											} else if (arr.length == 3) { //通用信息族
-												value = 'XXX';
-											}
-										}
+
 										element[key] = value;
 										break;
 									}
 									if (index == length - 1) {
 										let data = {
-											FmId: fmId
+											FmId: fmId,
+											Family: family
 										};
 										data[key] = value;
 										_this.needSaveData.push(
@@ -866,8 +932,35 @@
 					});
 					return data;
 				},
-				test: function (data) {
-					console.dirxml(data);
+				handsontableRenderer: function () {
+					/*
+					 *渲染下拉列表 
+					 * 
+					 */
+					this.customDropdownRenderer=function (instance, td, row, col, prop, value, cellProperties) {
+						var selectedId;
+						var optionsList = cellProperties.chosenOptions.data;
+
+						if (typeof optionsList === "undefined" || typeof optionsList.length === "undefined" || !optionsList.length) {
+							Handsontable.TextCell.renderer(instance, td, row, col, prop, value, cellProperties);
+							return td;
+						}
+
+						var values = (value + "").split(",");
+						value = [];
+						for (var index = 0; index < optionsList.length; index++) {
+
+							if (values.indexOf(optionsList[index].id + "") > -1) {
+								selectedId = optionsList[index].id;
+								value.push(optionsList[index].label);
+							}
+						}
+						value = value.join(", ");
+
+						Handsontable.TextCell.renderer(instance, td, row, col, prop, value, cellProperties);
+						return td;
+					}
+					return this;
 				},
 				getPointData: function () {
 					//let now = moment().format('YYYY-MM-DD HH:mm:ss')
@@ -896,20 +989,20 @@
 						.then(function (res) {
 							if (res.data.PointList.length > 0) {
 								_this.PointList = res.data.PointList;
-							
+
 								let allPoint = {
-									"Id": "-1",								
+									"Id": "-1",
 									"Name": "全部",
 									"Nocheck": 0,
 									"Total": 0
 								};
-								_this.PointList.forEach(function(point){
-									allPoint.Nocheck+=point.Nocheck;
-									allPoint.Total+=point.Total;
+								_this.PointList.forEach(function (point) {
+									allPoint.Nocheck += point.Nocheck;
+									allPoint.Total += point.Total;
 								});
-								_this.PointList.splice(0,0,allPoint);
+								_this.PointList.splice(0, 0, allPoint);
 								//_this.curPoint = _this.PointList[0];
-								_this.curPoint =allPoint;
+								_this.curPoint = allPoint;
 								//_this.pointCount = _this.PointList.length > 4 ? 4 : _this.PointList.length;
 								//加载默认数据
 								// _this.initData();//此处不再加载数据，改为点位变动的时候加载，数据加载完成默认点位会变化为第一个
