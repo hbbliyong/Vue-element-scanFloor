@@ -17,6 +17,7 @@
 
 	<!-- 引入组件库 -->
 	<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+	<script src="js/config.js"></script>
 	<script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script>
 	<style>
 		.cell-edit-color {
@@ -69,24 +70,33 @@
 	</div>
 	<script>
 		//深拷贝
+		// function shallowCopy(src) {
+		// 	var dst = {};
+		// 	for (var prop in src) {
+		// 		if (src.hasOwnProperty(prop)) {
+		// 			dst[prop] = src[prop];
+		// 		}
+		// 	}
+		// 	return dst;
+		// }
+		/**@description 深拷贝
+		 * *@argument 目标函数
+		 * *@author hbbliyong
+		 */
 		function shallowCopy(src) {
-			var dst = {};
-			for (var prop in src) {
-				if (src.hasOwnProperty(prop)) {
-					dst[prop] = src[prop];
-				}
-			}
-			return dst;
+			if (src)
+				return JSON.parse(JSON.stringify(src));
+			return undefined;
 		}
 		/*
 		 * 全属性搜索
 		 */
 		function searchAllValue(data, key) {
-							// console.dirxml(data)
-							// console.log(key)
-			let keyHeader=['UserName','Phone','Note'];				
+			// console.dirxml(data)
+			// console.log(key)
+			let keyHeader = ['UserName', 'Phone', 'Note'];
 			for (var prop in data) {
-				if (data[prop] &&keyHeader.indexOf(prop)>-1&& data[prop].indexOf(key) > -1) {
+				if (data[prop] && keyHeader.indexOf(prop) > -1 && data[prop].indexOf(key) > -1) {
 					return true;
 				}
 			}
@@ -99,7 +109,7 @@
 		var app = new Vue({
 			el: "#app",
 			data: {
-				baseUrl: 'http://172.16.3.12:8080/ScanBuilding/',
+				baseUrl: config.baseUrl,
 				tableData: [],
 				showData: [],
 				currRowIndex: '',
@@ -231,6 +241,10 @@
 							this.warning('电话号码输入有误！,请修改后保存！');
 							return;
 						}
+						if (!this.tableData[i].UserName) {
+							this.warning('用户名不能为空！,请修改后保存！');
+							return;
+						}
 						if (!this.tableData[i].UserId) {
 							addUsers.push(this.tableData[i]);
 						} else
@@ -259,7 +273,7 @@
 						createUser.User.UserName = cUser.UserName;
 						axios.post(this.baseUrl + "service/user/create", createUser)
 							.then(function (res) {
-								
+
 								console.dirxml(res.data);
 							})
 							.catch(function (err) {
@@ -282,7 +296,7 @@
 							console.log(err);
 						})
 					//保存成功，重新加载数据
-						_this.getUsers();
+					_this.getUsers();
 					_this.successTips('数据保存成功');
 				},
 				selectChange: function (selection, rowData) {
@@ -314,6 +328,7 @@
 					//用户不能为空
 					if (field == 'UserName' && !newValue) {
 						this.warning('用户名不能为空');
+						return;
 					}
 					//电话号码不能相同
 					if (field == 'Phone') {

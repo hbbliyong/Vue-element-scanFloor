@@ -12,6 +12,7 @@
 	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 	<script src="js/qrcodejs/qrcode.js"></script>
 	<script src="js/tools.js"></script>
+	<script src="js/config.js"></script>
 	<script src="bower_components/juqery/dist/jquery.js"></script>
 	<style>
 		.menu {
@@ -190,7 +191,7 @@
 				},
 				ProjId: '',
 				UserId: '',
-				baseUrl: 'http://172.16.0.189:8080/ScanBuilding/',
+				baseUrl: config.baseUrl,
 				clickIndex: '',
 				nameIndex: 0,
 				imgShow: false,

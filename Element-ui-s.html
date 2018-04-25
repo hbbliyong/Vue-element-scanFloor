@@ -7,7 +7,7 @@
 	<!-- 引入样式 -->
 	<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
 	<link rel="stylesheet" href="css/font-awesome.css" />
-	<link rel="stylesheet" href="bower_components/chosen/chosen.css"/>
+	<link rel="stylesheet" href="bower_components/chosen/chosen.css" />
 	<!-- <script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script> -->
 	<!-- 先引入 Vue -->
 	<script src="https://unpkg.com/vue/dist/vue.js"></script>
@@ -19,9 +19,10 @@
 	<script src="bower_components/axios/dist/axios.js"></script>
 	<script src="bower_components/chosen/chosen.jquery.js"></script>
 	<script src="js/handsontable-chosen-editor.js"></script>
-	
+
 	<script src="bower_components/moment/moment.js"></script>
 	<script src="js/tools.js"></script>
+	<script src="js/config.js"></script>
 	<script src="https://cdn.bootcss.com/babel-polyfill/6.26.0/polyfill.js"></script>
 	<style type="text/css">
 		[class^="el-icon-fa"],
@@ -153,9 +154,9 @@
 			<el-col :span="8">
 				<el-button @click="search(30)" :class=" elTopBtn == 30 ? 'button_active' : ''" type="text">一个月内</el-button>
 				<span>|</span>
-				<el-button @click="search(7-1)" :class=" elTopBtn == 7 ? 'button_active' : ''" type="text">一周内</el-button>
+				<el-button @click="search(7-1)" :class=" elTopBtn == 6 ? 'button_active' : ''" type="text">一周内</el-button>
 				<span>|</span>
-				<el-button @click="search(3-1)" :class=" elTopBtn == 3 ? 'button_active' : ''" type="text">近三天</el-button>
+				<el-button @click="search(3-1)" :class=" elTopBtn == 2 ? 'button_active' : ''" type="text">近三天</el-button>
 				<span>|</span>
 				<el-button @click="search(1)" :class=" elTopBtn == 1 ? 'button_active' : ''" type="text">昨天</el-button>
 				<span>|</span>
@@ -273,7 +274,7 @@
 			data: {
 				projId: 'Pj1101080001',
 				UserId: 'revit',
-				baseUrl: 'http://172.16.3.12:8080/ScanBuilding/',
+				baseUrl: config.baseUrl,
 				builds: [],
 				bValue: '',
 				floors: [],
@@ -338,9 +339,9 @@
 					this.initData();
 					console.log('点位改变');
 				},
-				//是否选择全部点位
-				isAllPoint: function (val, oldVal) {
-					if (val) this.initData();
+				//tab标签改变，tabId归零
+				tabs: function (val, oldVal) {
+					this.tabId='0';
 				}
 			},
 			computed: {
@@ -415,7 +416,7 @@
 						td.appendChild(textNode);
 					};
 					var pointRenderer = function (instance, td, row, col, prop, value, cellProperties) {
-
+						if (!_this.curPoint.Id || _this.curPoint.Id == -1) return;
 						while (td.firstChild) {
 							td.removeChild(td.firstChild);
 						}
@@ -429,24 +430,35 @@
 						td.appendChild(flagElement);
 					};
 					return [{
-						data: 'Checked',
-						//								type: 'text',
-						//width: 80,
-						//renderer: flagRenderer
-						type: 'checkbox',
-						checkedTemplate: '1',
-						uncheckedTemplate: '0'
-					}, {
-						data: 'PointName',
-						type: 'text',
-						renderer: pointRenderer
-					}, {
-						data: 'Family',
-						type: 'dropdown',
-						source: this.allFamilyData.map(function (family) {
-							return family.name + '-' + family.code;
-						})
-					}];
+							data: 'Checked',
+							//								type: 'text',
+							//width: 80,
+							//renderer: flagRenderer
+							type: 'checkbox',
+							checkedTemplate: '1',
+							uncheckedTemplate: '0'
+						}, {
+							// data: 'PointName',
+							type: 'text',
+							renderer: pointRenderer,
+							readOnly: true
+						},
+						// {
+						// 	data: 'Family',
+						// 	type: 'dropdown',
+						// 	source: this.allFamilyData.map(function (family) {
+						// 		return family.name + '-' + family.code;
+						// 	})
+						// }
+						{
+							renderer: _this.handsontableRenderer().customDropdownRenderer,
+							data: 'Family',
+							editor: "chosen",
+							chosenOptions: {
+								data: this.allFamilyData
+							}
+						}
+					];
 				},
 
 				//数据加载
@@ -479,7 +491,7 @@
 						.then(function (datas) {
 							_this.allDatas = datas.data.Family;
 							_this.tabs = []; //清空tab
-							//_this.hotElements = [];
+							_this.hotElements = [];
 							_this.FmImages = []; //清空图片
 							//所有点位数据中族分类
 							datas.data.Family.forEach(function (data) {
@@ -639,58 +651,14 @@
 					this.isActive = !this.isActive
 				},
 				initSetting: function (datas, headersData) {
-					//整理数据
-
-					for (let index = 0; index < datas.length; index++) {
-						let element = datas[index];
-						//处理族
-						for (let index = 0; index < this.allFamilyData.length; index++) {
-							let f = this.allFamilyData[index];
-							if (f.code == element.Family) {
-								element.Family = f.name + '-' + f.code;
-								break;
-							}
-						}
-					}
-
 					var _this = this;
 					var hotId = 'hot' + this.tabs[this.tabId].Code;
 					console.log(hotId);
-					//检测是否已加载
-					for (hot in this.hotElements) {
-						if (this.hotElements[hot].rootElement.id == hotId) {
-							this.currHot = this.hotElements[hot];
-							this.currHot.loadData(datas);
-							return;
-						}
-					}
+
 					var hotElement = document.querySelector('#' + hotId);
 					var columnsSetting = this.getDefaultColumnSetting();
 					var headers = this.getDefaultHeader();
-					function customDropdownRenderer (instance, td, row, col, prop, value, cellProperties) {
-						var selectedId;
-						var optionsList = cellProperties.chosenOptions.data;
 
-						if (typeof optionsList === "undefined" || typeof optionsList.length === "undefined" || !optionsList.length) {
-							Handsontable.renderers.TextRenderer(instance, td, row, col, prop, value, cellProperties);
-							return td;
-						}
-
-						var values = (value + "").split(",");
-						value = [];
-						for (var index = 0; index < optionsList.length; index++) {
-
-							if (values.indexOf(optionsList[index].code + "") > -1) {
-								selectedId = optionsList[index].code;
-								value.push(optionsList[index].name);
-							}
-						}
-						value = value.join(", ");
-
-						// Handsontable.TextCell.renderer(instance, td, row, col, prop, value, cellProperties);
-						Handsontable.renderers.TextRenderer(instance, td, row, col, prop, value, cellProperties);
-						return td;
-					}
 					//处理列头与数据参数
 					for (let i = 0; i < headersData.length; i++) {
 						let head = headersData[i];
@@ -723,7 +691,7 @@
 									// });
 									columnTypes = {
 										data: head.infopoint_code,
-										renderer: customDropdownRenderer,
+										renderer: _this.handsontableRenderer().customDropdownRenderer,
 										editor: 'chosen',
 										chosenOptions: {
 											data: head.dataSource
@@ -840,7 +808,7 @@
 							// setting if prevent scrolling after selection
 							let familyId = this.getDataAtRowProp(r, "Family");
 							let familyData = (_this.allDatas.filter(function (d) {
-								return (d.Name + '-' + d.Code) == familyId;
+								return d.Code == familyId;
 							})[0] || {}).FmList;
 							let fmId = this.getDataAtRowProp(r, "FmId");
 							let data = familyData.filter(function (d) {
@@ -851,8 +819,16 @@
 						}
 					};
 					console.log(datas, 'columnsSetting')
-					var hot = new Handsontable(hotElement, hotSettings);
+					let hot = new Handsontable(hotElement, hotSettings);
 					// hot.render();
+					//检测是否已加载
+					for (hotIndex in this.hotElements) {
+						if (this.hotElements[hotIndex].rootElement.id == hotId) {
+							this.currHot = hot;
+							this.hotElements[hotIndex] = hot;
+							return;
+						}
+					}
 					this.hotElements.push(hot);
 					this.currHot = hot;
 					console.log("加载数据到handsontable")
@@ -933,16 +909,17 @@
 					return data;
 				},
 				handsontableRenderer: function () {
+					let _this = {};
 					/*
 					 *渲染下拉列表 
 					 * 
 					 */
-					this.customDropdownRenderer=function (instance, td, row, col, prop, value, cellProperties) {
+					_this.customDropdownRenderer = function (instance, td, row, col, prop, value, cellProperties) {
 						var selectedId;
 						var optionsList = cellProperties.chosenOptions.data;
 
 						if (typeof optionsList === "undefined" || typeof optionsList.length === "undefined" || !optionsList.length) {
-							Handsontable.TextCell.renderer(instance, td, row, col, prop, value, cellProperties);
+							Handsontable.renderers.TextRenderer(instance, td, row, col, prop, value, cellProperties);
 							return td;
 						}
 
@@ -950,17 +927,20 @@
 						value = [];
 						for (var index = 0; index < optionsList.length; index++) {
 
-							if (values.indexOf(optionsList[index].id + "") > -1) {
-								selectedId = optionsList[index].id;
-								value.push(optionsList[index].label);
+							if (values.indexOf(optionsList[index].code + "") > -1) {
+								selectedId = optionsList[index].code;
+								value.push(optionsList[index].name);
 							}
 						}
 						value = value.join(", ");
 
-						Handsontable.TextCell.renderer(instance, td, row, col, prop, value, cellProperties);
+						// Handsontable.TextCell.renderer(instance, td, row, col, prop, value, cellProperties);
+						Handsontable.renderers.TextRenderer(instance, td, row, col, prop, value, cellProperties);
 						return td;
 					}
-					return this;
+
+
+					return _this;
 				},
 				getPointData: function () {
 					//let now = moment().format('YYYY-MM-DD HH:mm:ss')

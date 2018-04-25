@@ -16,6 +16,7 @@
 	<!--<script src="https://unpkg.com/element-ui/lib/index.js"></script>-->
 	<script src="https://cdn.bootcss.com/element-ui/2.2.2/index.js"></script>
 	<script src="js/tools.js" type="text/javascript" charset="utf-8"></script>
+	<script src="js/config.js"></script>
 	<script src="bower_components/moment/moment.js"></script>
 	<style>
 		.el-col button.button_active {
@@ -119,8 +120,7 @@
 			data: {
 				projId: '', //项目id
 				loginUserId: '', //登录用户的Id
-				baseUrl: 'http://172.16.3.12:8080/ScanBuilding/',
-				//baseUrl: 'http://172.16.2.198:8080/',
+				baseUrl: config.baseUrl,
 				tableData: [],
 				showData: [],
 				customDate: [],
