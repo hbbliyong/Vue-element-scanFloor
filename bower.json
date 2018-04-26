@@ -17,10 +17,11 @@
   ],
   "dependencies": {
     "axios": "^0.18.0",
-    "element-ui": "^2.2.0",
-    "juqery": "^3.3.1",
+    "element-ui": "^2.3.6",
+    "jquery": "^3.3.1",
     "handsontable": "^2.0.0",
     "qrcode.js": "qrcode#^1.0.2",
-    "polyfill": "*"
+    "polyfill": "*",
+    "vue": "^2.5.16"
   }
 }

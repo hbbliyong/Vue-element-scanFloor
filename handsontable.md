@@ -1,8 +1,8 @@
 ### 表格：handsontable
 
 
-1.[自定义列--Cell types](https://docs.handsontable.com/pro/1.18.1/demo-checkbox.html) 
-2.列字段只读
+#### 1.[自定义列--Cell types](https://docs.handsontable.com/pro/1.18.1/demo-checkbox.html) 
+#### 2.列字段只读
 
 ```javascript
 {
@@ -16,7 +16,7 @@
    { type: 'text', allowEmpty: true, DefaultValue: false}//勘定科目-補助科目コード  
 
 ```
-3.单元格样式，合并单元格
+#### 3.单元格样式，合并单元格
 
 ```javascript
 var container = document.getElementById('lina_main');  
@@ -55,3 +55,12 @@ hot = new Handsontable(container, {
 ```
 ##### 5.获取所有配置
 hot.getSettings().columns
+#### 6.Handsontable Dropdown with key-value pair
+[解决方案](https://github.com/mydea/handsontable-chosen-editor)  
+需要注意的地方  
+1.记得引入chosen.jquery.js，此插件是基于chosen的jquery插件
+2.由于版本的更新部分代码需要修改
+customDropdownRenderer 方法中的
+>Handsontable.TextCell.renderer需要改成Handsontable.renderers.TextRenderer
+
+

@@ -50,6 +50,7 @@ class TableLayout {
   }
 
   setHeight(value, prop = 'height') {
+    if (Vue.prototype.$isServer) return;
     const el = this.table.$el;
     if (typeof value === 'string' && /^\d+$/.test(value)) {
       value = Number(value);
@@ -158,6 +159,7 @@ class TableLayout {
       }
 
       this.bodyWidth = Math.max(bodyMinWidth, bodyWidth);
+      this.table.resizeState.width = this.bodyWidth;
     } else {
       flattenColumns.forEach((column) => {
         if (!column.width && !column.minWidth) {
