@@ -225,8 +225,8 @@
 		</el-row>
 		<el-row>
 			<div>
-				<el-tabs v-model="tabId" type="border-card" @tab-click="tabClick(tabId)">
-					<el-tab-pane v-for="tab in tabs" :label="tab.Name+'('+tab.Count+')'" :key="tab.Code">
+				<el-tabs v-model="tabId" type="border-card" @tab-click="tabClick">
+					<el-tab-pane v-for="tab in tabs" :label="tab.Name+'('+tab.Count+')'" :key="tab.Code" :name="tab.Code">
 						<div :id="'hot'+tab.Code" class="showData"></div>
 					</el-tab-pane>
 				</el-tabs>
@@ -284,7 +284,7 @@
 				// pointCount: 0,
 				isActive: false,
 				allDatas: [],
-				tabId: '0',
+				tabId: 'XXX', //默认为通用设备族code
 				PointList: [],
 				curPoint: {},
 				imgData: ['1', '2', '3', '4'],
@@ -340,9 +340,13 @@
 					console.log('点位改变');
 				},
 				//tab标签改变，tabId归零
-				tabs: function (val, oldVal) {
-					this.tabId='0';
-				}
+				// tabs: function (val, oldVal) {
+				// 	if(val.length>0){
+				// 		let defaultTab=val.filter(function(t){return t.Code=='XXX'})[0]||val[0].Code;
+				// 		this.tabId = defaultTab.Code;
+				// 	}
+
+				// }
 			},
 			computed: {
 				//显示的点位标签个数
@@ -416,7 +420,7 @@
 						td.appendChild(textNode);
 					};
 					var pointRenderer = function (instance, td, row, col, prop, value, cellProperties) {
-						if (!_this.curPoint.Id || _this.curPoint.Id == -1) return;
+
 						while (td.firstChild) {
 							td.removeChild(td.firstChild);
 						}
@@ -491,10 +495,18 @@
 						.then(function (datas) {
 							_this.allDatas = datas.data.Family;
 							_this.tabs = []; //清空tab
+							_this.tabId = '';
+							_this.hotElements.forEach(function(hot){
+								hot.destroy();
+							});
 							_this.hotElements = [];
+
 							_this.FmImages = []; //清空图片
 							//所有点位数据中族分类
 							datas.data.Family.forEach(function (data) {
+								//如果有未归类，默认显示未归类
+								if (data.Code == 'XXX')
+									_this.tabId = 'XXX';
 								_this.tabs.push({
 									Code: data.Code,
 									Name: data.Name,
@@ -502,10 +514,12 @@
 									FmList: data.FmList
 								});
 							});
+
 							let defaultData = datas.data.Family[0]; //TODO:如果后台排序不准的话，需要查找未归类设备
 							//默认显示未分类设备
 							if (defaultData) {
 								_this.$nextTick(function () {
+									_this.tabId = _this.tabId == 'XXX' ? 'XXX' : _this.tabs[0].Code;
 									//加载数据
 									_this.getParamHeader(defaultData.Code, function (headData) {
 										_this.initSetting(defaultData.FmList, headData);
@@ -554,6 +568,7 @@
 					console.log(this.fValue);
 				},
 				showPintDetail: function (pointId) {
+					if (!this.curPoint.Id || this.curPoint.Id == -1) return;
 					if (pointId) {
 						this.showDianWei = true;
 						//var src = 'dianwei-detail.html?pointId=' + pointId + '&projId=' + this.projId + '&userId=' + this.UserId;
@@ -564,9 +579,8 @@
 					}
 					return false;
 				},
-				tabClick: function () {
-					var tabData = this.tabs[this.tabId]
-					var hotId = 'hot' + tabData.Code;
+				tabClick: function (tab, event) {
+					var hotId = 'hot' + this.tabId;
 					//检测是否已加载
 					for (hot in this.hotElements) {
 						if (this.hotElements[hot].rootElement.id == hotId) {
@@ -577,6 +591,9 @@
 						}
 					}
 					var _this = this;
+					var tabData = this.tabs.filter(function (t) {
+						return t.Code == _this.tabId
+					})[0];
 					//加载数据
 					this.getParamHeader(tabData.Code, function (headData) {
 						_this.initSetting(tabData.FmList, headData);
@@ -652,7 +669,7 @@
 				},
 				initSetting: function (datas, headersData) {
 					var _this = this;
-					var hotId = 'hot' + this.tabs[this.tabId].Code;
+					var hotId = 'hot' + this.tabId;
 					console.log(hotId);
 
 					var hotElement = document.querySelector('#' + hotId);
@@ -704,7 +721,6 @@
 								break;
 						}
 						columnsSetting.push(columnTypes);
-
 					}
 					//增加只读Id,为了编辑保存数据用
 					columnsSetting.push({
@@ -770,15 +786,8 @@
 								let key = change[1];
 								let value = change[3];
 
-								//特殊处理枚举信息
-								if (value && value.indexOf('-') > -1) {
-									let arr = value.split('-');
-									if (arr.length == 2) {
-										value = arr[1];
-									}
-								}
 								let fmId = _this.currHot.getDataAtRowProp(row, 'FmId');
-								let family = _this.currHot.getDataAtRowProp(row, 'Family').split('-')[1];
+								let family = _this.currHot.getDataAtRowProp(row, 'Family');
 								//let rowData = _this.currHot.getDataAtRow(row);
 								let length = _this.needSaveData.length || 1;
 								//检测是否有重复数据，如果有重复数据，直接替换掉
@@ -813,12 +822,13 @@
 							let fmId = this.getDataAtRowProp(r, "FmId");
 							let data = familyData.filter(function (d) {
 								return d.FmId == fmId;
-							});
-							_this.FmImages = data[0].ImageList;
+							})[0] || {};
+							_this.FmImages = data.ImageList;
 							preventScrolling.value = true;
 						}
 					};
-					console.log(datas, 'columnsSetting')
+					console.log(datas, 'columnsSetting');
+	
 					let hot = new Handsontable(hotElement, hotSettings);
 					// hot.render();
 					//检测是否已加载
