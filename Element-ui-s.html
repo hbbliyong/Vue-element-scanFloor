@@ -489,33 +489,39 @@
 					if (_this.checkedEq) {
 						postData.Checked = 0;
 					}
-					// console.log(JSON.stringify(postData));
+					console.log(JSON.stringify(postData));
 
 					axios.post(_this.baseUrl + "service/fm/queryRevit", postData)
 						.then(function (datas) {
 							_this.allDatas = datas.data.Family;
 							_this.tabs = []; //清空tab
 							_this.tabId = '';
-							_this.hotElements.forEach(function(hot){
+							_this.hotElements.forEach(function (hot) {
 								hot.destroy();
 							});
 							_this.hotElements = [];
 
 							_this.FmImages = []; //清空图片
 							//所有点位数据中族分类
+							let defaultData = datas.data.Family[0];
 							datas.data.Family.forEach(function (data) {
 								//如果有未归类，默认显示未归类
-								if (data.Code == 'XXX')
+								let tab={
+										Code: data.Code,
+										Name: data.Name,
+										Count: data.FmList.length,
+										FmList: data.FmList
+									};
+								if (data.Code == 'XXX') {
 									_this.tabId = 'XXX';
-								_this.tabs.push({
-									Code: data.Code,
-									Name: data.Name,
-									Count: data.FmList.length,
-									FmList: data.FmList
-								});
+									_this.tabs.splice(0,0,tab);
+									defaultData=tab;
+								} else {
+									_this.tabs.push(tab);
+								}
 							});
 
-							let defaultData = datas.data.Family[0]; //TODO:如果后台排序不准的话，需要查找未归类设备
+							 //TODO:如果后台排序不准的话，需要查找未归类设备
 							//默认显示未分类设备
 							if (defaultData) {
 								_this.$nextTick(function () {
@@ -828,7 +834,7 @@
 						}
 					};
 					console.log(datas, 'columnsSetting');
-	
+
 					let hot = new Handsontable(hotElement, hotSettings);
 					// hot.render();
 					//检测是否已加载

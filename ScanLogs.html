@@ -105,7 +105,7 @@
 		 */
 		function searchAllValue(data, key) {
 			for (var prop in data) {
-				if (data[prop].indexOf(key) > -1) {
+				if (data[prop]&&data[prop].indexOf(key) > -1) {
 					return true;
 				}
 			}
