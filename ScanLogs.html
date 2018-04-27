@@ -73,7 +73,7 @@
 						</template>
 					</el-table-column>
 				</el-table>
-				<el-pagination background layout="prev,pager,next" :total="tableData.length" @current-change='currentChange'></el-pagination>
+				<el-pagination background layout="prev,pager,next" :total="count" @current-change='currentChange'></el-pagination>
 			</div>
 		</el-row>
 		<el-dialog title="自定义扫楼时间段" :visible.sync="dialogFormVisible" style="width:1050px">
@@ -128,6 +128,7 @@
 				//					showCustomDate: this.showDate(),
 				keyword: '',
 				elTopBtn: 0,
+				count:10,
 				dialogFormVisible: false,
 				formLabelWidth: '120px',
 				startDate: formatDate(),
@@ -173,7 +174,7 @@
 						.then(function (res) {
 							//console.log(res.data.UserList);
 							var data = res.data.LogList;
-
+							that.count=res.data.Count;
 							that.showData = data;
 							that.tableData = data;
 						})
